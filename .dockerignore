@@ -1,0 +1,9 @@
+.git
+.env
+.env.*
+node_modules
+.npm-cache
+.m2-cache
+backend/.m2-cache
+dist
+backend/target

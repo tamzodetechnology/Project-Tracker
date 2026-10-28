@@ -1,0 +1,79 @@
+# Tamzode Project Tracker
+
+**Every Project. Clear Progress.** A React + TypeScript workspace backed by a Spring Boot REST API and PostgreSQL.
+
+## Requirements
+
+- Node.js 20.19+ or 22.12+
+- Java 21
+- Maven 3.9+
+- Docker Desktop (or a local PostgreSQL 16+ instance)
+
+## Start locally
+
+1. Copy `.env.example` to `.env` and set the database URL, username, and password for your local PostgreSQL server. Docker Compose reads the password from this file, and Spring Boot imports the file when you start it from `backend/`.
+2. Start PostgreSQL:
+
+   ```powershell
+   docker compose up -d postgres
+   ```
+
+   For a manually managed PostgreSQL server, create a database named `tamzode_tracker` and a user with access to it, then put that user's credentials in `.env`. The default `tamzode` / `tamzode_local` credentials are intended for the Compose database; they will not automatically match a separately installed PostgreSQL service.
+
+3. Start the API from a terminal with the project root as its working directory:
+
+   ```powershell
+   cd backend
+   mvn spring-boot:run
+   ```
+
+   Flyway creates the schema and inserts the four initial projects plus their project-specific tasks on first start. The seed deliberately contains no fabricated completion history or due dates. Existing Payroll modules are described as reported in the project record; no completion status is inferred for them.
+
+4. In a second terminal at the project root:
+
+   ```powershell
+   npm install
+   npm run dev
+   ```
+
+   Open the Vite URL printed in the terminal (usually `http://localhost:5173`). The UI uses the API; it does not silently fall back to browser-only or mock storage when the API is unavailable.
+
+## Deploy with Neon and Render
+
+This repository is configured as a single Render Docker web service: the Spring Boot process serves both the built React frontend and `/api` from the same origin. Neon hosts PostgreSQL separately. This avoids frontend/API CORS and runtime frontend URL configuration.
+
+**Access control is not implemented yet.** The API is currently unauthenticated, so anyone who finds the public Render URL can read and change tracker records. Treat the first deployment as a private preview and do not enter confidential company or client data until owner sign-in and endpoint protection are added.
+
+1. Create a **new, empty** Neon project/database. In Neon’s Connect dialog, choose the Java/JDBC connection details and copy the JDBC URL. Keep the Neon password secret. Neon requires an encrypted connection; keep `sslmode=require` in the URL. Neon can also provide pooled endpoints (with `-pooler` in the hostname); this app uses HikariCP with a small pool, so start with the direct endpoint unless your Neon connection limits call for the pooler. See [Neon connection security](https://neon.com/blog/oops-proof-your-vibe-code-with-neon-because-mistakes-happen) and [Neon pooling](https://neon.com/blog/postgres-support-case-recap).
+2. Push this repository to GitHub or another Git provider and connect it to Render. There is no Git remote configured in this workspace yet.
+3. In Render, choose **New → Blueprint** and select this repository. Render reads [`render.yaml`](./render.yaml), builds the Dockerfile, and asks for `DATABASE_URL`, `DATABASE_USERNAME`, and `DATABASE_PASSWORD`. Use the JDBC URL from Neon for `DATABASE_URL`, and enter its matching role and password in the other fields. Do not put these values in `render.yaml` or commit them.
+4. Deploy. Flyway creates the schema and initial project/task records when the Spring service starts. Do not point the first deployment at a database that already contains tables named `projects`, `tasks`, `milestones`, `activity`, or `daily_updates`.
+5. Open the Render service URL. Check `/api/health` for `{"status":"ok"}` and `/api/projects` for the seeded projects. The Render health check is configured to `/api/health`.
+
+Render’s [Docker web services](https://render.com/docs/docker) build from the repository Dockerfile; its [Blueprint](https://render.com/docs/blueprint-spec) keeps the service configuration in source control. Render supplies the service port at runtime, which the Spring configuration reads from `PORT`. For a production launch, consider a paid Render instance if you need it continuously available; Render’s free web services can spin down after inactivity ([Render deploy guide](https://render.com/docs/your-first-deploy)).
+
+## Checks
+
+```powershell
+npm run build
+cd backend
+mvn test
+```
+
+## Features
+
+- Dashboard counts and project progress are derived from database records.
+- Create projects, tasks, and daily progress notes; update task statuses; remove projects with a confirmation and cascade warning.
+- Search and filter projects and tasks; switch tasks between list and Kanban views; navigate monthly task deadlines.
+- View recent activity and connection status. API validation errors use consistent JSON responses. Local CORS is configurable.
+- Light and dark themes, responsive navigation, visible focus indicators, and accessible labels.
+
+## API routes
+
+- `GET/POST /api/projects`, `GET/PUT/DELETE /api/projects/{id}`
+- `GET/POST /api/tasks`, `PUT/DELETE /api/tasks/{id}`, `PATCH /api/tasks/{id}/status`
+- `GET/POST /api/milestones`, `PUT/DELETE /api/milestones/{id}`
+- `GET/POST /api/daily-updates`
+- `GET /api/activity`
+
+List endpoints accept `offset` and bounded `limit` parameters; project and task list endpoints also accept status/project filters. Milestones have CRUD APIs and database persistence; their dates appear in the calendar. A dedicated milestone editor, project/task editing forms, task deletion UI, useful links/repository editing, milestone-based progress, weekly calendar, authentication, and team permissions are future work. A backend unit test covers validation/error response formatting; API integration and frontend interaction tests still need to be added. The initial workspace is intended for a trusted local user; do not expose the unauthenticated API publicly.

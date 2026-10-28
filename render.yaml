@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: tamzode-project-tracker
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_USERNAME
+        sync: false
+      - key: DATABASE_PASSWORD
+        sync: false
+      - key: SPRING_FLYWAY_ENABLED
+        value: "true"
