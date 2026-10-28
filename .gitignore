@@ -9,3 +9,4 @@ backend/target/
 .npm-cache/
 dist/
 .m2-cache/
+.neon
