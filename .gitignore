@@ -10,3 +10,5 @@ backend/target/
 dist/
 .m2-cache/
 .neon
+
+.vscode/

@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Activity, AlertCircle, ArrowRight, ArrowUpRight, Bell, CalendarDays, Check, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Circle, Command, FileText, FolderKanban, LayoutDashboard, ListTodo, LoaderCircle, Menu, MoreHorizontal, Plus, Search, Settings, Sparkles, Target, TrendingUp, X } from 'lucide-react';
+import { Activity, AlertCircle, ArrowRight, ArrowUpRight, CalendarDays, Check, CheckCircle2, ChevronLeft, ChevronRight, Circle, Command, FileText, FolderKanban, LayoutDashboard, ListTodo, LoaderCircle, Menu, MoreHorizontal, Plus, Search, Settings, Sparkles, Target, TrendingUp, X } from 'lucide-react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import axios from 'axios';
 import personalProjectCharacter from './assets/personal-project-character.png';
+import dashboardHero from './assets/dashboard-hero.png';
 
 type Status='Planned'|'In Progress'|'On Hold'|'Completed'; type Priority='Low'|'Medium'|'High'|'Urgent'; type TaskStatus='To Do'|'In Progress'|'In Review'|'Done';
 type Project={id:number;name:string;description:string;category:string;technology:string;status:Status;priority:Priority;startDate?:string;deadline?:string;owner?:string;notes?:string;usefulLinks?:string;repositoryUrl?:string;progress:number;taskCount?:number;milestoneCount?:number;completedTasks?:number};
@@ -25,12 +26,60 @@ function App(){
  const mutate=async(kind:'project'|'task'|'update',data:unknown,id?:number)=>{const url=kind==='update'?'/daily-updates':`/${kind==='project'?'projects':'tasks'}${id?`/${id}`:''}`;if(kind==='task'&&id) await api.put(url,data);else if(kind==='project'&&id)await api.put(url,data);else await api.post(url,data);await reload();setModal(null);setToast(kind==='update'?'Progress note saved':`${kind==='project'?'Project':'Task'} saved successfully`)};
  const changeStatus=async(t:Task,status:TaskStatus)=>{try{await api.patch(`/tasks/${t.id}/status`,{status});await reload();setToast('Task status updated')}catch{setToast('Could not update task. Please try again.')}};
  const removeProject=async(p:Project)=>{const count=p.taskCount||0,milestones=p.milestoneCount||0;if(!window.confirm(`Delete “${p.name}” and its ${count} related task(s) and ${milestones} milestone(s)? This cannot be undone.`))return;try{await api.delete(`/projects/${p.id}`);await reload();setToast('Project deleted')}catch{setToast('Could not delete project. Please try again.')}};
- return <div className="app dark"><aside className={`sidebar ${menu?'open':''}`}><div className="brand"><div className="brandmark"><Command size={19}/></div><div><strong>tamzode</strong><span>TECHNOLOGY</span></div><button className="mobile-close icon-button" onClick={()=>setMenu(false)} aria-label="Close navigation"><X size={18}/></button></div><button className="workspace"><div className="workspace-avatar">T</div><span><b>Tamzode Technology</b><small>Personal workspace</small></span><ChevronDown size={15}/></button><div className="nav-label">WORKSPACE</div><nav>{nav.map(([name,Icon])=><button key={name} className={`nav-item ${page===name?'selected':''}`} onClick={()=>{setPage(name);setMenu(false)}}><Icon size={18}/><span>{name}</span>{name==='Tasks'&&metrics.pending>0&&<i>{metrics.pending}</i>}</button>)}</nav><div className="sidebar-bottom"><div className="upgrade"><div className="upgrade-icon"><Sparkles size={16}/></div><b>Keep your momentum</b><p>Your projects are ready for their next chapter.</p><button onClick={()=>setModal('update')}>Add a daily update <ArrowRight size={14}/></button></div><button className="profile"><div className="avatar">TZ</div><span><b>My Workspace</b><small>Personal tracker</small></span><MoreHorizontal size={18}/></button></div></aside>
- <main className="main"><header className="topbar"><button className="icon-button mobile-menu" onClick={()=>setMenu(true)} aria-label="Open navigation"><Menu size={20}/></button><div className="breadcrumbs">Workspace <span>/</span> <b>{page}</b></div><div className="top-actions"><label className="search"><Search size={16}/><input placeholder="Search anything..." value={search} onChange={e=>setSearch(e.target.value)}/><kbd>⌘ K</kbd></label><button className="icon-button notification" aria-label="Notifications"><Bell size={18}/><i/></button><div className="avatar top-avatar">TZ</div></div></header>
+ return (
+  <div className="app dark">
+    <aside className={`sidebar ${menu ? 'open' : ''}`}>
+      <div className="brand">
+        <div className="brandmark"><Command size={19}/></div>
+        <div><strong>tamzode</strong><span>TECHNOLOGY</span></div>
+        <button className="mobile-close icon-button" onClick={()=>setMenu(false)} aria-label="Close navigation"><X size={18}/></button>
+      </div>
+      <div className="nav-label">WORKSPACE</div>
+      <nav>
+        {nav.map(([name, Icon]) => (
+          <button
+            key={name}
+            className={`nav-item ${page === name ? 'selected' : ''}`}
+            onClick={() => { setPage(name); setMenu(false); }}
+          >
+            <Icon size={18}/>
+            <span>{name}</span>
+            {name === 'Tasks' && metrics.pending > 0 && <i>{metrics.pending}</i>}
+          </button>
+        ))}
+      </nav>
+      <div className="sidebar-bottom">
+        <div className="upgrade">
+          <div className="upgrade-icon"><Sparkles size={16}/></div>
+          <b>Keep your momentum</b>
+          <p>Your projects are ready for their next chapter.</p>
+          <button onClick={()=>setModal('update')}>Add a daily update <ArrowRight size={14}/></button>
+        </div>
+        <button className="profile">
+          <div className="avatar">TZ</div>
+          <span><b>My Workspace</b><small>Personal tracker</small></span>
+          <MoreHorizontal size={18}/>
+        </button>
+      </div>
+    </aside>
+    <main className="main">
+      <header className="topbar">
+        <button className="icon-button mobile-menu" onClick={()=>setMenu(true)} aria-label="Open navigation"><Menu size={20}/></button>
+        <div className="breadcrumbs">Workspace <span>/</span> <b>{page}</b></div>
+        <div className="top-actions">
+          <label className="search">
+            <Search size={16}/>
+            <input placeholder="Search anything..." value={search} onChange={e=>setSearch(e.target.value)}/>
+          </label>
+          <div className="avatar top-avatar">TZ</div>
+        </div>
+      </header>
  <div className="content"><AnimatePresence mode="wait"><motion.div key={page} initial={{opacity:0,y:6}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-4}} transition={{duration:.18}}>
  {loading?<div className="loading"><LoaderCircle className="spin" size={22}/>Connecting to your workspace...</div>:error?<Unavailable retry={reload}/>:page==='Dashboard'?<Dashboard projects={projects} activities={activities} metrics={metrics} dueSoon={dueSoon} high={high} onTask={()=>setModal('task')} onUpdate={()=>setModal('update')} onProject={()=>setModal('project')} onPage={setPage} changeStatus={changeStatus}/>:page==='Projects'?<Projects projects={projects.filter(p=>p.name.toLowerCase().includes(search.toLowerCase()))} onCreate={()=>setModal('project')} onDelete={removeProject}/>:page==='Tasks'?<Tasks tasks={tasks.filter(t=>t.title.toLowerCase().includes(search.toLowerCase())&&(filter==='All projects'||t.projectName===filter))} projects={projects} filter={filter} setFilter={setFilter} onCreate={()=>setModal('task')} changeStatus={changeStatus}/>:page==='Calendar'?<Calendar tasks={tasks} milestones={milestones} projects={projects} date={calendar} setDate={setCalendar}/>:page==='Activity Log'?<ActivityPage items={activities}/>:<SettingsPage api={!!error} projects={projects.length} tasks={tasks.length}/>}
  </motion.div></AnimatePresence></div></main>
- {menu&&<button className="scrim" onClick={()=>setMenu(false)} aria-label="Close navigation"/>}{modal&&<Modal kind={modal} projects={projects} close={()=>setModal(null)} save={mutate}/>}<AnimatePresence>{toast&&<motion.div className="toast" initial={{opacity:0,y:14}} animate={{opacity:1,y:0}} exit={{opacity:0,y:8}}><CheckCircle2 size={18}/>{toast}</motion.div>}</AnimatePresence></div>
+  {menu&&<button className="scrim" onClick={()=>setMenu(false)} aria-label="Close navigation"/>}{modal&&<Modal kind={modal} projects={projects} close={()=>setModal(null)} save={mutate}/>}<AnimatePresence>{toast&&<motion.div className="toast" initial={{opacity:0,y:14}} animate={{opacity:1,y:0}} exit={{opacity:0,y:8}}><CheckCircle2 size={18}/>{toast}</motion.div>}</AnimatePresence>
+  </div>
+  );
 }
 function Header({eyebrow,title,description,actions}:{eyebrow:string;title:string;description:string;actions?:React.ReactNode}){return <div className="page-heading"><div><div className="eyebrow">{eyebrow}</div><h1>{title}</h1><p>{description}</p></div>{actions&&<div className="heading-actions">{actions}</div>}</div>}
 function Unavailable({retry}:{retry:()=>void}){return <div className="unavailable"><div className="unavailable-main"><div className="unavailable-art"><img src={personalProjectCharacter} alt="Illustration of a person working on a laptop"/><span className="connection-dot"/></div><div className="unavailable-copy"><span className="eyebrow">WORKSPACE CONNECTION</span><h2>Your workspace is out of reach</h2><p>The tracker is open, but it can’t read your project data yet. Start the API and confirm its PostgreSQL connection, then try again.</p><div className="unavailable-actions"><span className="connection-pill"><i/>API not connected</span><button className="button primary" onClick={retry}>Try again <ArrowRight size={15}/></button></div></div></div><div className="unavailable-steps"><div className="unavailable-steps-head"><b>Two quick checks</b><span>To get back to work</span></div><div className="unavailable-step"><i>01</i><span><b>Start the backend</b><small>Make sure the Spring Boot API is running.</small></span></div><div className="unavailable-step"><i>02</i><span><b>Check the database connection</b><small>Confirm the PostgreSQL URL and credentials.</small></span></div></div></div>}
@@ -41,7 +90,7 @@ function Dashboard({projects,activities,metrics,dueSoon,high,onTask,onUpdate,onP
  const taskTotal=metrics.completed+metrics.pending;
  const metricCards:any[]=[[FolderKanban,'Total projects',metrics.total,'Across your workspace','teal',null],[TrendingUp,'In progress',metrics.active,'Moving forward now','green',metrics.total?metrics.active/metrics.total*100:null],[CheckCircle2,'Tasks completed',metrics.completed,'Marked done','blue',taskTotal?metrics.completed/taskTotal*100:null],[ListTodo,'Pending tasks',metrics.pending,'Still on your list','purple',taskTotal?metrics.pending/taskTotal*100:null],[CalendarDays,'Upcoming deadlines',metrics.upcoming,'Due in the next 7 days','green',null],[AlertCircle,'Overdue tasks',metrics.overdue,'Past due and unfinished','orange',null]];
  return <><Header eyebrow={new Intl.DateTimeFormat(undefined,{weekday:'long',month:'long',day:'numeric'}).format(new Date()).toUpperCase()} title={greeting} description="Your projects, tasks, and milestones at a glance." actions={<><button className="button secondary" onClick={onTask}><Plus size={16}/> Add task</button><button className="button primary" onClick={onProject}><Plus size={16}/> New project</button></>}/>
- <section className="personal-banner"><div className="personal-banner-copy"><span className="eyebrow">YOUR PERSONAL WORKSPACE</span><h2>Your ideas, in motion.</h2><p>Choose a clear next step and keep your projects moving forward.</p></div><img src={personalProjectCharacter} alt="Person working on a personal project at a laptop"/></section>
+ <section className="personal-banner"><div className="personal-banner-copy"><span className="eyebrow">YOUR PERSONAL WORKSPACE</span><h2>Your ideas, in motion.</h2><p>Choose a clear next step and keep your projects moving forward.</p></div><img src={dashboardHero} alt="Developer working on project tracker workspace"/></section>
  <div className="metric-grid">{metricCards.map(([I,label,val,hint,color,ratio]:any)=><div className={`metric-card ${ratio!==null?'has-progress':''}`} key={label}><div className="metric-top"><span>{label}</span><div className={`metric-icon ${color}`}><I size={17}/></div></div><div className="metric-value">{loadingNumber(val)}</div><div className="metric-hint"><span className={`dot ${color}`}/>{hint}</div>{ratio!==null&&<div className="metric-progress" aria-label={`${Math.round(ratio)} percent`}><span style={{width:`${Math.max(0,Math.min(100,ratio))}%`}}/></div>}</div>)}</div>
  <section className="section projects-section">{featuredProject?<><FeaturedProject p={featuredProject} onBrowse={()=>onPage('Projects')}/>{otherProjects.length>0&&<><div className="section-head more-projects-head"><div><h2>More projects</h2><p>Your other work in progress</p></div><button className="text-button" onClick={()=>onPage('Projects')}>All projects <ArrowRight size={15}/></button></div><div className="project-grid">{otherProjects.map((p,i)=><ProjectCard key={p.id} p={p} color={colors[(i+1)%4]}/>)}</div></>}</>:<Empty title="Your next project starts here" body="Create a project to give your ideas a clear plan and a place to grow." action="Create project" onClick={onProject}/>}</section>
  <div className="lower-grid"><section className="panel"><div className="section-head"><div><h2>Upcoming deadlines</h2><p>What’s coming up next</p></div><button className="icon-button" aria-label="View calendar" onClick={()=>onPage('Calendar')}><ArrowUpRight size={17}/></button></div>{dueSoon.length?<div className="deadline-list">{dueSoon.map(t=><div className="deadline-row" key={t.id}><button className="task-check" onClick={()=>changeStatus(t,'Done')} aria-label={`Complete ${t.title}`}><Circle size={19}/></button><div className="deadline-copy"><b>{t.title}</b><small>{t.projectName||'Project'}</small></div><span className="date-pill"><CalendarDays size={13}/>{fmtDate(t.dueDate)}</span></div>)}</div>:<Empty title="Nothing due soon" body="Tasks with a deadline will show up here."/>}</section>
@@ -51,8 +100,106 @@ function Dashboard({projects,activities,metrics,dueSoon,high,onTask,onUpdate,onP
  </>}
 function loadingNumber(v:number){return v.toString()}
 function FeaturedProject({p,onBrowse}:{p:Project;onBrowse:()=>void}){const progress=Math.max(0,Math.min(100,p.progress||0));return <article className="featured-project"><div className="featured-project-copy"><div className="featured-project-meta"><span className="eyebrow">YOUR CURRENT FOCUS</span><span className={`status-badge ${p.status.toLowerCase().replace(' ','-')}`}><i/>{p.status}</span></div><h2>{p.name}</h2><p>{p.description||p.category||'Keep this project moving one step at a time.'}</p><div className="featured-project-details"><span><CalendarDays size={15}/>{p.deadline?`Due ${fmtDate(p.deadline)}`:'No deadline set'}</span><span><ListTodo size={15}/>{p.completedTasks||0} of {p.taskCount||0} tasks complete</span></div><button className="text-button" onClick={onBrowse}>View all projects <ArrowRight size={15}/></button></div><div className="featured-progress-ring" style={{'--progress':`${progress}%`} as React.CSSProperties} role="img" aria-label={`${progress}% complete`}><div><b>{progress}%</b><small>complete</small></div></div></article>}
-function ProjectCard({p,color}:{p:Project;color:string}){return <article className="project-card"><div className="project-card-top"><div className="project-symbol" style={{'--project-color':color} as React.CSSProperties}><FolderKanban size={18}/></div><span className={`status-badge ${p.status.toLowerCase().replace(' ','-')}`}><i/>{p.status}</span><button className="icon-button tiny" aria-label="More project options"><MoreHorizontal size={17}/></button></div><h3>{p.name}</h3><p className="project-desc">{p.description||p.category}</p><div className="progress-label"><span>Progress</span><b>{p.progress}%</b></div><div className="progress-track"><div style={{width:`${p.progress}%`,background:color}}/></div><div className="project-card-foot"><span><ListTodo size={14}/>{p.completedTasks||0}/{p.taskCount||0} tasks</span><span className="priority-label"><i className={`priority-dot ${p.priority.toLowerCase()}`}/>{p.priority} priority</span></div></article>}
-function Projects({projects,onCreate,onDelete}:{projects:Project[];onCreate:()=>void;onDelete:(p:Project)=>void}){const [q,setQ]=useState(''),[status,setStatus]=useState('All statuses'),[view,setView]=useState('grid');const filtered=projects.filter(p=>p.name.toLowerCase().includes(q.toLowerCase())&&(status==='All statuses'||p.status===status));return <><Header eyebrow="YOUR WORKSPACE" title="Projects" description={`${projects.length} ${projects.length===1?'project':'projects'} keeping things moving.`} actions={<button className="button primary" onClick={onCreate}><Plus size={16}/> New project</button>}/><div className="toolbar"><label className="search inline-search"><Search size={16}/><input placeholder="Find a project..." value={q} onChange={e=>setQ(e.target.value)}/></label><div className="toolbar-right"><select value={status} onChange={e=>setStatus(e.target.value)}><option>All statuses</option><option>Planned</option><option>In Progress</option><option>On Hold</option><option>Completed</option></select><div className="view-toggle"><button onClick={()=>setView('grid')} className={view==='grid'?'active':''}>Grid</button><button onClick={()=>setView('list')} className={view==='list'?'active':''}>List</button></div></div></div>{filtered.length?<div className={view==='grid'?'project-grid projects-page-grid':'project-list'}>{filtered.map((p,i)=><div key={p.id} className="project-wrap"><ProjectCard p={p} color={colors[i%4]}/><button className="delete-link" onClick={()=>onDelete(p)}>Delete project</button></div>)}</div>:<Empty title="No projects found" body={projects.length?'Try a different search or status filter.':'Create a project to see it here.'} action="Create project" onClick={onCreate}/>}</>}
+function ProjectCard({p,color,onDelete}:{p:Project;color:string;onDelete?:()=>void}){
+  const [menuOpen, setMenuOpen] = useState(false);
+  return (
+    <article className="project-card">
+      <div className="project-card-top">
+        <div className="project-symbol" style={{'--project-color':color} as React.CSSProperties}>
+          <FolderKanban size={18}/>
+        </div>
+        <span className={`status-badge ${p.status.toLowerCase().replace(' ','-')}`}>
+          <i/>{p.status}
+        </span>
+        {onDelete ? (
+          <div className="project-menu-wrap">
+            <button
+              className="icon-button tiny"
+              aria-label="More project options"
+              onClick={() => setMenuOpen(!menuOpen)}
+            >
+              <MoreHorizontal size={17}/>
+            </button>
+            {menuOpen && (
+              <div className="project-dropdown-menu">
+                <button
+                  className="dropdown-item danger"
+                  onClick={() => { setMenuOpen(false); onDelete(); }}
+                >
+                  Delete project
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <button className="icon-button tiny" aria-label="More project options">
+            <MoreHorizontal size={17}/>
+          </button>
+        )}
+      </div>
+      <h3>{p.name}</h3>
+      <p className="project-desc">{p.description||p.category}</p>
+      <div className="progress-label">
+        <span>Progress</span>
+        <b>{p.progress}%</b>
+      </div>
+      <div className="progress-track">
+        <div style={{width:`${p.progress}%`,background:color}}/>
+      </div>
+      <div className="project-card-foot">
+        <span><ListTodo size={14}/>{p.completedTasks||0}/{p.taskCount||0} tasks</span>
+        <span className="priority-label"><i className={`priority-dot ${p.priority.toLowerCase()}`}/>{p.priority} priority</span>
+      </div>
+    </article>
+  );
+}
+function Projects({projects,onCreate,onDelete}:{projects:Project[];onCreate:()=>void;onDelete:(p:Project)=>void}){
+  const [q,setQ]=useState(''),[status,setStatus]=useState('All statuses'),[view,setView]=useState('grid');
+  const filtered=projects.filter(p=>p.name.toLowerCase().includes(q.toLowerCase())&&(status==='All statuses'||p.status===status));
+  return (
+    <>
+      <Header
+        eyebrow="YOUR WORKSPACE"
+        title="Projects"
+        description={`${projects.length} ${projects.length===1?'project':'projects'} keeping things moving.`}
+        actions={<button className="button primary" onClick={onCreate}><Plus size={16}/> New project</button>}
+      />
+      <div className="toolbar">
+        <label className="search inline-search">
+          <Search size={16}/>
+          <input placeholder="Find a project..." value={q} onChange={e=>setQ(e.target.value)}/>
+        </label>
+        <div className="toolbar-right">
+          <select value={status} onChange={e=>setStatus(e.target.value)}>
+            <option>All statuses</option>
+            <option>Planned</option>
+            <option>In Progress</option>
+            <option>On Hold</option>
+            <option>Completed</option>
+          </select>
+          <div className="view-toggle">
+            <button onClick={()=>setView('grid')} className={view==='grid'?'active':''}>Grid</button>
+            <button onClick={()=>setView('list')} className={view==='list'?'active':''}>List</button>
+          </div>
+        </div>
+      </div>
+      {filtered.length ? (
+        <div className={view==='grid'?'project-grid projects-page-grid':'project-list'}>
+          {filtered.map((p,i)=>(
+            <ProjectCard key={p.id} p={p} color={colors[i%4]} onDelete={()=>onDelete(p)}/>
+          ))}
+        </div>
+      ) : (
+        <Empty
+          title="No projects found"
+          body={projects.length?'Try a different search or status filter.':'Create a project to see it here.'}
+          action="Create project"
+          onClick={onCreate}
+        />
+      )}
+    </>
+  );
+}
 function Tasks({tasks,projects,filter,setFilter,onCreate,changeStatus}:{tasks:Task[];projects:Project[];filter:string;setFilter:(s:string)=>void;onCreate:()=>void;changeStatus:(t:Task,s:TaskStatus)=>void}){const[view,setView]=useState<'list'|'board'>('list'),[status,setStatus]=useState('All statuses');const filtered=tasks.filter(t=>status==='All statuses'||t.status===status);return <><Header eyebrow="GET THINGS DONE" title="Tasks" description="The small steps that move big things forward." actions={<button className="button primary" onClick={onCreate}><Plus size={16}/> Add task</button>}/><div className="toolbar"><div className="toolbar-right"><select value={filter} onChange={e=>setFilter(e.target.value)}><option>All projects</option>{projects.map(p=><option key={p.id}>{p.name}</option>)}</select><select value={status} onChange={e=>setStatus(e.target.value)}><option>All statuses</option>{['To Do','In Progress','In Review','Done'].map(s=><option key={s}>{s}</option>)}</select></div><div className="view-toggle"><button className={view==='list'?'active':''} onClick={()=>setView('list')}>List</button><button className={view==='board'?'active':''} onClick={()=>setView('board')}>Board</button></div></div>{view==='list'?filtered.length?<div className="task-table"><div className="task-table-head"><span>Task</span><span>Project</span><span>Priority</span><span>Due date</span><span>Status</span></div>{filtered.map(t=><div className="task-table-row" key={t.id}><button className="check-btn" onClick={()=>changeStatus(t,t.status==='Done'?'To Do':'Done')} aria-label="Toggle task completion">{t.status==='Done'?<CheckCircle2 size={19}/>:<Circle size={19}/>}</button><b>{t.title}</b><span className="task-project">{t.projectName}</span><span className="priority-label"><i className={`priority-dot ${t.priority.toLowerCase()}`}/>{t.priority}</span><span className="task-date">{fmtDate(t.dueDate)}</span><select className="status-select" value={t.status} onChange={e=>changeStatus(t,e.target.value as TaskStatus)}>{['To Do','In Progress','In Review','Done'].map(s=><option key={s}>{s}</option>)}</select></div>)}</div>:<Empty title="No tasks here yet" body="Add a task and give your project its next step." action="Add task" onClick={onCreate}/>:<div className="board">{(['To Do','In Progress','In Review','Done'] as TaskStatus[]).map((s,i)=><div className="board-col" key={s}><div className="board-title"><span className={`kanban-dot dot-${i}`}/><b>{s}</b><i>{filtered.filter(t=>t.status===s).length}</i></div>{filtered.filter(t=>t.status===s).map(t=><article className="kanban-card" key={t.id}><b>{t.title}</b><small>{t.projectName}</small><div><span className={`priority-dot ${t.priority.toLowerCase()}`}/>{t.priority}<button onClick={()=>changeStatus(t,(['To Do','In Progress','In Review','Done'] as TaskStatus[])[Math.min(i+1,3)])} aria-label="Move task forward"><ArrowRight size={14}/></button></div></article>)}<button className="add-board-task" onClick={onCreate}><Plus size={14}/> Add task</button></div>)}</div>}</>}
 function Calendar({tasks,milestones,projects,date,setDate}:{tasks:Task[];milestones:Milestone[];projects:Project[];date:Date;setDate:(d:Date)=>void}){const year=date.getFullYear(),month=date.getMonth(),start=new Date(year,month,1),days=new Date(year,month+1,0).getDate(),offset=(start.getDay()+6)%7,cells=Math.ceil((offset+days)/7)*7;return <><Header eyebrow="PLAN AHEAD" title="Calendar" description="Deadlines and milestones, all in one place." actions={<button className="button secondary" onClick={()=>setDate(new Date())}>Today</button>}/><div className="calendar-panel"><div className="calendar-toolbar"><div className="calendar-month"><button className="icon-button" onClick={()=>setDate(new Date(year,month-1,1))}><ChevronLeft size={18}/></button><h2>{date.toLocaleString('en',{month:'long',year:'numeric'})}</h2><button className="icon-button" onClick={()=>setDate(new Date(year,month+1,1))}><ChevronRight size={18}/></button></div><span className="calendar-legend"><i/>Task deadline <span className="milestone-legend"/>Milestone</span></div><div className="calendar-grid">{['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d=><div className="weekday" key={d}>{d}</div>)}{Array.from({length:cells},(_,i)=>{const day=i-offset+1,valid=day>0&&day<=days,dt=valid?`${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`:'',items=tasks.filter(t=>t.dueDate===dt),targets=milestones.filter(m=>m.targetDate===dt);return <div key={i} className={`calendar-cell ${valid?'':'muted'} ${valid&&new Date(year,month,day).toDateString()===new Date().toDateString()?'today':''}`}><span className="calendar-day">{valid?day:new Date(year,month,day).getDate()}</span>{items.slice(0,2).map(t=><span key={`t${t.id}`} className={`calendar-event ${t.status==='Done'?'done':''}`} title={t.title}>{t.title}</span>)}{targets.slice(0,2).map(m=><span key={`m${m.id}`} className="calendar-event milestone-event" title={m.name}>{m.name}</span>)}{items.length+targets.length>2&&<small>+{items.length+targets.length-2} more</small>}</div>})}</div></div><section className="section calendar-upcoming"><div className="section-head"><div><h2>Month at a glance</h2><p>{tasks.filter(t=>t.dueDate?.startsWith(`${year}-${String(month+1).padStart(2,'0')}`)).length} task deadlines · {milestones.filter(m=>m.targetDate?.startsWith(`${year}-${String(month+1).padStart(2,'0')}`)).length} milestones · {projects.length} projects</p></div></div></section></>}
 function ActivityPage({items}:{items:ActivityItem[]}){return <><Header eyebrow="THE JOURNEY SO FAR" title="Activity log" description="Every meaningful step, captured along the way."/><div className="activity-timeline">{items.length?items.map(a=><ActivityRow key={a.id} item={a} large/>):<Empty title="A fresh beginning" body="Updates to projects, tasks, and milestones will be recorded here."/>}</div></>}
