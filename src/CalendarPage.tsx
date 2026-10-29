@@ -494,7 +494,7 @@ export function CalendarPage({
             </div>
           ) : (
             /* Month / Week Grid View */
-            <div className={`calendar-grid ${view === 'Week' ? 'calendar-week-grid' : 'calendar-month-grid'}`}>
+            <div className={`calendar-view-container ${view === 'Week' ? 'calendar-week-grid' : 'calendar-month-grid'}`}>
               <div className="calendar-weekdays-row">
                 {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => (
                   <div className="calendar-weekday-col" key={d}>

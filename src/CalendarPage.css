@@ -443,41 +443,54 @@
 }
 
 /* Month Grid */
-.calendar-grid {
+.calendar-view-container {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
   border: 1px solid #183623;
   border-radius: 12px;
   overflow: hidden;
   background: #07150e;
+  box-sizing: border-box;
 }
 
 .calendar-weekdays-row {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  display: grid !important;
+  grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+  width: 100% !important;
   background: #091a11;
   border-bottom: 1px solid #183623;
+  box-sizing: border-box;
 }
 
 .calendar-weekday-col {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 10px;
+  padding: 10px 4px;
   font-size: 11px;
   font-weight: 700;
   color: #88a790;
   letter-spacing: 0.8px;
   text-transform: uppercase;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .calendar-cells-matrix {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  display: grid !important;
+  grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+  width: 100% !important;
+  box-sizing: border-box;
 }
 
 .calendar-day-cell {
   display: flex;
   flex-direction: column;
   min-height: 124px;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
   padding: 8px 10px;
   background: #08170f;
   border-right: 1px solid #142e1d;

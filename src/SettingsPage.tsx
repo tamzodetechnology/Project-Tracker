@@ -2,15 +2,13 @@ import React, { useState, useRef } from 'react';
 import {
   Download,
   Upload,
-  RotateCcw,
   RefreshCw,
   Server,
   User,
   ShieldCheck,
   Check,
-  Trash2,
 } from 'lucide-react';
-import { downloadBackupJson, resetWorkspaceData, purgeDummyData } from './mockData';
+import { downloadBackupJson } from './mockData';
 import type { WorkspaceData } from './mockData';
 import './SettingsPage.css';
 
@@ -23,7 +21,6 @@ interface SettingsPageProps {
   workspaceData: WorkspaceData;
   onUpdateWorkspaceInfo: (name: string, company: string, user: string) => void;
   onRestoreBackup: (data: WorkspaceData) => void;
-  onResetData: () => void;
   onTestConnection: () => Promise<boolean>;
   notify: (s: string) => void;
 }
@@ -37,7 +34,6 @@ export function SettingsPage({
   workspaceData,
   onUpdateWorkspaceInfo,
   onRestoreBackup,
-  onResetData,
   onTestConnection,
   notify,
 }: SettingsPageProps) {
@@ -98,22 +94,6 @@ export function SettingsPage({
     };
     reader.readAsText(file);
     if (fileInputRef.current) fileInputRef.current.value = '';
-  };
-
-  const handleReset = () => {
-    if (window.confirm('Reset all workspace data to clean default demo data? Any unsaved edits will be cleared.')) {
-      resetWorkspaceData();
-      onResetData();
-      notify('Workspace reset to fresh demo data');
-    }
-  };
-
-  const handlePurgeDummy = () => {
-    if (window.confirm('Clear all sample dummy data and keep only real projects (Bezent Ecosystem & Project Tracker)?')) {
-      const clean = purgeDummyData();
-      onRestoreBackup(clean);
-      notify('Dummy data purged. Only real projects active!');
-    }
   };
 
   return (
@@ -249,27 +229,6 @@ export function SettingsPage({
               <div>
                 <b>Restore from JSON</b>
                 <p>Upload a previously exported backup file to restore workspace state.</p>
-              </div>
-            </button>
-
-            <button
-              type="button"
-              className="backup-card-btn"
-              style={{ borderColor: '#2b5e39' }}
-              onClick={handlePurgeDummy}
-            >
-              <Trash2 size={20} color="#72df00" />
-              <div>
-                <b style={{ color: '#8cff45' }}>Purge Dummy Data</b>
-                <p>Keep only real projects (Bezent Ecosystem & Project Tracker) and clear sample entries.</p>
-              </div>
-            </button>
-
-            <button type="button" className="backup-card-btn danger" onClick={handleReset}>
-              <RotateCcw size={20} color="#ff8e8e" />
-              <div>
-                <b style={{ color: '#ffb2b2' }}>Reset to Demo Data</b>
-                <p>Reload clean sample dataset with 4 projects and full tasks.</p>
               </div>
             </button>
           </div>

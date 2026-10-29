@@ -51,7 +51,6 @@ import {
   loadWorkspaceData,
   saveWorkspaceData,
   calculateWorkspaceMetrics,
-  resetWorkspaceData,
   exportTimeEntriesCsv,
 } from './mockData';
 import type { WorkspaceData } from './mockData';
@@ -544,21 +543,6 @@ function App() {
     saveWorkspaceData(data);
   };
 
-  const handleResetData = () => {
-    const clean = resetWorkspaceData();
-    setProjects(clean.projects);
-    setTasks(clean.tasks);
-    setMilestones(clean.milestones);
-    setTimeEntries(clean.timeEntries);
-    setActivities(clean.activities);
-    setTimer(clean.timer);
-    setWorkspaceInfo({
-      workspaceName: clean.workspaceName || 'Tamzode Technology',
-      companyName: clean.companyName || 'Tamzode Tech Lab',
-      userDisplayName: clean.userDisplayName || 'Sureha DJ',
-    });
-  };
-
   const handleTestConnection = async (): Promise<boolean> => {
     try {
       const res = await api.get('/dashboard');
@@ -790,7 +774,6 @@ function App() {
                   workspaceData={currentWorkspaceData}
                   onUpdateWorkspaceInfo={handleUpdateWorkspaceInfo}
                   onRestoreBackup={handleRestoreBackup}
-                  onResetData={handleResetData}
                   onTestConnection={handleTestConnection}
                   notify={setToast}
                 />
