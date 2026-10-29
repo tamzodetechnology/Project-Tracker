@@ -15,6 +15,22 @@
       "taskCount": 8,
       "completedTasks": 1,
       "milestoneCount": 2
+    },
+    {
+      "id": 2,
+      "name": "Bezent Ecosystem (HRMS & PMS)",
+      "description": "Enterprise multi-tenant HRMS & Project Management System (PMS) covering attendance, employee records, tenant administration, and workflow automations.",
+      "category": "Enterprise SaaS",
+      "technology": "TypeScript, React, Node.js, Drizzle ORM, MySQL 8.4",
+      "status": "In Progress",
+      "priority": "Critical",
+      "startDate": "2026-10-04",
+      "deadline": "2026-11-18",
+      "currentStage": "Development",
+      "progress": 60,
+      "taskCount": 5,
+      "completedTasks": 3,
+      "milestoneCount": 2
     }
   ],
   "tasks": [
@@ -29,10 +45,51 @@
       "dueDate": "2026-10-29",
       "actualSeconds": 1800,
       "notes": "Completed MCP server for Antigravity and Claude Code."
+    },
+    {
+      "id": 201,
+      "title": "MySQL 8.4 DB setup and Drizzle ORM migrations",
+      "description": "Configure local mysqld datadir at C:/ProgramData/MySQL/bezent_dev_data and run drizzle migrations.",
+      "projectId": 2,
+      "projectName": "Bezent Ecosystem (HRMS & PMS)",
+      "status": "Done",
+      "priority": "Critical",
+      "dueDate": "2026-10-14",
+      "actualSeconds": 14400
+    },
+    {
+      "id": 202,
+      "title": "Attendance module location & security verification",
+      "description": "Implement geofenced attendance capture, shift rules, and tamper verification.",
+      "projectId": 2,
+      "projectName": "Bezent Ecosystem (HRMS & PMS)",
+      "status": "In Progress",
+      "priority": "High",
+      "dueDate": "2026-11-01",
+      "actualSeconds": 7200
+    },
+    {
+      "id": 203,
+      "title": "Tenant Profile & Multi-company onboarding wizard",
+      "description": "Complete Company Details, Tenant Profile, and Administration dashboard atlas.",
+      "projectId": 2,
+      "projectName": "Bezent Ecosystem (HRMS & PMS)",
+      "status": "In Progress",
+      "priority": "High",
+      "dueDate": "2026-11-04",
+      "actualSeconds": 3600
     }
   ],
   "milestones": [],
   "activities": [
+    {
+      "id": 1793274282516,
+      "action": "Project Added",
+      "entityType": "Project",
+      "entityName": "Bezent Ecosystem (HRMS & PMS)",
+      "details": "Added Bezent Ecosystem into active workspace store.",
+      "createdAt": "2026-10-29T11:44:42.517Z"
+    },
     {
       "id": 1793273458704,
       "action": "Updated task to Done",

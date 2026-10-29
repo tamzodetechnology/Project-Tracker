@@ -104,6 +104,27 @@ export const DEFAULT_PROJECTS: Project[] = [
     completedTasks: 5,
     milestoneCount: 1,
   },
+  {
+    id: 5,
+    name: 'Bezent Ecosystem (HRMS & PMS)',
+    description: 'Enterprise multi-tenant HRMS & Project Management System (PMS) covering attendance, employee records, tenant administration, and workflow automations.',
+    category: 'Enterprise SaaS',
+    technology: 'Node.js, TypeScript, Drizzle ORM, MySQL 8.4, React',
+    status: 'In Progress',
+    priority: 'Critical',
+    startDate: dayOffset(-25),
+    deadline: dayOffset(20),
+    currentStage: 'Development',
+    progressMode: 'tasks',
+    owner: 'Sureha DJ',
+    notes: 'Local dev database configured on MySQL 8.4 (BEZENT-MySQL84). Developing HRMS modules and PMS roadmap.',
+    usefulLinks: 'https://github.com/tamzodetechnology/bezent_ecosystem',
+    repositoryUrl: 'https://github.com/tamzodetechnology/bezent_ecosystem',
+    progress: 60,
+    taskCount: 5,
+    completedTasks: 3,
+    milestoneCount: 2,
+  },
 ];
 
 export const DEFAULT_TASKS: Task[] = [
@@ -340,6 +361,75 @@ export const DEFAULT_TASKS: Task[] = [
     actualSeconds: 14400,
     assignee: 'Sureha DJ',
   },
+  {
+    id: 501,
+    title: 'MySQL 8.4 DB setup and Drizzle ORM migrations',
+    description: 'Configure local mysqld datadir at C:/ProgramData/MySQL/bezent_dev_data and run drizzle migrations.',
+    projectId: 5,
+    projectName: 'Bezent Ecosystem (HRMS & PMS)',
+    status: 'Done',
+    priority: 'Critical',
+    startDate: dayOffset(-20),
+    dueDate: dayOffset(-15),
+    estimatedMinutes: 240,
+    actualSeconds: 14400,
+    assignee: 'Sureha DJ',
+  },
+  {
+    id: 502,
+    title: 'Attendance module location & security verification',
+    description: 'Implement geofenced attendance capture, shift rules, and tamper verification.',
+    projectId: 5,
+    projectName: 'Bezent Ecosystem (HRMS & PMS)',
+    status: 'In Progress',
+    priority: 'High',
+    startDate: dayOffset(-5),
+    dueDate: dayOffset(3),
+    estimatedMinutes: 300,
+    actualSeconds: 7200,
+    assignee: 'Sureha DJ',
+  },
+  {
+    id: 503,
+    title: 'Tenant Profile & Multi-company onboarding wizard',
+    description: 'Complete Company Details, Tenant Profile, and Administration dashboard atlas.',
+    projectId: 5,
+    projectName: 'Bezent Ecosystem (HRMS & PMS)',
+    status: 'In Progress',
+    priority: 'High',
+    startDate: dayOffset(-2),
+    dueDate: dayOffset(6),
+    estimatedMinutes: 220,
+    actualSeconds: 3600,
+    assignee: 'Sureha DJ',
+  },
+  {
+    id: 504,
+    title: 'BEZENT PMS workflow architecture benchmark',
+    description: 'Structure Project Manager (PM) and Project Lead (PL) workflow specification maps.',
+    projectId: 5,
+    projectName: 'Bezent Ecosystem (HRMS & PMS)',
+    status: 'Done',
+    priority: 'Medium',
+    startDate: dayOffset(-10),
+    dueDate: dayOffset(-2),
+    estimatedMinutes: 180,
+    actualSeconds: 10800,
+    assignee: 'Sureha DJ',
+  },
+  {
+    id: 505,
+    title: 'Employee records reference and changes audit',
+    description: 'Build employee profile history tracking, document uploads, and HRMS verification.',
+    projectId: 5,
+    projectName: 'Bezent Ecosystem (HRMS & PMS)',
+    status: 'To Do',
+    priority: 'Medium',
+    startDate: dayOffset(2),
+    dueDate: dayOffset(12),
+    estimatedMinutes: 260,
+    assignee: 'Sureha DJ',
+  },
 ];
 
 export const DEFAULT_MILESTONES: Milestone[] = [
@@ -396,6 +486,24 @@ export const DEFAULT_MILESTONES: Milestone[] = [
     projectName: 'Design System & Brand Refresh',
     targetDate: dayOffset(-4),
     status: 'Completed',
+  },
+  {
+    id: 7,
+    name: 'Phase 1: HRMS Core Architecture & MySQL Database',
+    description: 'Multi-tenant database schema, Drizzle ORM baseline, and API tests established.',
+    projectId: 5,
+    projectName: 'Bezent Ecosystem (HRMS & PMS)',
+    targetDate: dayOffset(-5),
+    status: 'Completed',
+  },
+  {
+    id: 8,
+    name: 'Phase 2: Attendance Security & Multi-Company Wizard',
+    description: 'Deploy geofenced biometric/location attendance rules and company onboarding flow.',
+    projectId: 5,
+    projectName: 'Bezent Ecosystem (HRMS & PMS)',
+    targetDate: dayOffset(14),
+    status: 'In Progress',
   },
 ];
 
@@ -634,6 +742,29 @@ export function loadWorkspaceData(): WorkspaceData {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed.projects && parsed.tasks) {
+        // Auto-merge Bezent Ecosystem if not yet present in existing storage
+        const hasBezent = parsed.projects.some((p: any) =>
+          (p.name || '').toLowerCase().includes('bezent')
+        );
+        if (!hasBezent) {
+          const bezentProject = DEFAULT_PROJECTS.find((p) => p.id === 5);
+          if (bezentProject) {
+            parsed.projects.push(bezentProject);
+            parsed.tasks.push(...DEFAULT_TASKS.filter((t) => t.projectId === 5));
+            parsed.milestones.push(...DEFAULT_MILESTONES.filter((m) => m.projectId === 5));
+            if (parsed.activities) {
+              parsed.activities.unshift({
+                id: Date.now(),
+                action: 'Project Added',
+                entityType: 'Project',
+                entityName: bezentProject.name,
+                details: 'Added Bezent Ecosystem (HRMS & PMS) to active workspace portfolio.',
+                createdAt: new Date().toISOString(),
+              });
+            }
+            saveWorkspaceData(parsed);
+          }
+        }
         return parsed;
       }
     }
