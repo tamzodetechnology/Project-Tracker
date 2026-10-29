@@ -2,7 +2,6 @@ import { useEffect, useState, useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Activity,
-  ArrowRight,
   CalendarDays,
   BarChart3,
   CheckCircle2,
@@ -12,11 +11,9 @@ import {
   LayoutDashboard,
   ListTodo,
   Menu,
-  MoreHorizontal,
   RefreshCw,
   Search,
   Settings,
-  Sparkles,
   Timer,
   X,
 } from 'lucide-react';
@@ -620,28 +617,6 @@ function App() {
             </button>
           ))}
         </nav>
-
-        <div className="sidebar-bottom">
-          <div className="upgrade">
-            <div className="upgrade-icon">
-              <Sparkles size={16} />
-            </div>
-            <b>Keep your momentum</b>
-            <p>Your projects are ready for their next chapter.</p>
-            <button onClick={() => setModal('update')}>
-              Add a daily update <ArrowRight size={14} />
-            </button>
-          </div>
-
-          <button className="profile">
-            <div className="avatar">TZ</div>
-            <span>
-              <b>{workspaceInfo.workspaceName}</b>
-              <small>{workspaceInfo.userDisplayName}</small>
-            </span>
-            <MoreHorizontal size={18} />
-          </button>
-        </div>
       </aside>
 
       {/* Main Workspace Area */}
