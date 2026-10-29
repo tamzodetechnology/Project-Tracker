@@ -149,3 +149,12 @@
 @media(prefers-reduced-motion:reduce){.dark .metric-card,.dark .project-card,.dark .panel,.dark .kanban-card,.dark .roadmap-card,.dark .phase-card,.dark .activity-panel .activity-row,.dark .settings-card,.dark .schedule-stats>div{transition:none}}
 @media(max-width:560px){.dark .project-card{min-height:208px;padding:15px}.dark .activity-panel{padding:15px}.dark .activity-panel .activity-row{padding:11px;gap:9px}.dark .activity-panel .activity-icon{width:29px;height:29px}}
 .project-title-open{border:0;padding:0;background:transparent;color:inherit;font:inherit;font-weight:inherit;text-align:left;cursor:pointer}.project-title-open:hover{color:#8ee535}.project-title-open:focus-visible{outline:2px solid #8ee535;outline-offset:3px;border-radius:3px}
+
+/* Offline Mode & Top Banner Status */
+.offline-mode-pill{display:inline-flex;align-items:center;gap:8px;padding:5px 12px;background:#1e1a0b;border:1px solid #4a3a16;border-radius:20px;font-size:11px;color:#f0cf7e;margin-right:8px}
+.offline-mode-pill .dot{width:7px;height:7px;border-radius:50%;background:#e5b33d;box-shadow:0 0 8px #e5b33d}
+.reconnect-pill-btn{display:inline-flex;align-items:center;gap:5px;border:none;background:#2d220a;color:#fff2d1;font-size:10px;font-weight:700;padding:3px 9px;border-radius:12px;cursor:pointer;margin-left:4px;transition:.15s}
+.reconnect-pill-btn:hover{background:#42320e;color:#fff}
+.online-mode-pill{display:inline-flex;align-items:center;gap:7px;padding:5px 11px;background:#0d1e11;border:1px solid #1e3f24;border-radius:20px;font-size:11px;color:#a5ea9b;margin-right:8px}
+.online-mode-pill .dot{width:7px;height:7px;border-radius:50%;background:#72df00;box-shadow:0 0 8px #72df00}
+

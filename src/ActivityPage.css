@@ -1,0 +1,102 @@
+/* Activity Log Styles in Deep Green · Electric Lime */
+.activity-page {
+  display: grid;
+  gap: 22px;
+  color: #e8f4ec;
+}
+
+.activity-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.activity-group-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #72df00;
+  margin: 18px 0 10px;
+}
+
+.activity-group-title:first-child {
+  margin-top: 0;
+}
+
+.activity-group-title i {
+  flex: 1;
+  height: 1px;
+  background: #1c3c26;
+}
+
+.activity-cards-list {
+  display: grid;
+  gap: 10px;
+}
+
+.activity-card-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: linear-gradient(145deg, #0e2419 0%, #08150f 100%);
+  border: 1px solid #1f4229;
+  border-radius: 12px;
+  padding: 16px 18px;
+  box-shadow: 0 8px 22px #0004;
+  transition: all 0.16s ease;
+}
+
+.activity-card-item:hover {
+  background: #112d1f;
+  border-color: #357245;
+  transform: translateX(3px);
+}
+
+.activity-icon-bubble {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #14321d;
+  border: 1px solid #285b34;
+  color: #72df00;
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+.activity-card-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.activity-card-headline {
+  font-size: 13px;
+  color: #eaf6ec;
+  font-weight: 600;
+  margin: 0;
+}
+
+.activity-card-headline span {
+  color: #8cff45;
+  font-weight: 700;
+}
+
+.activity-card-details {
+  font-size: 11px;
+  color: #9cb5a2;
+  margin: 4px 0 0;
+  line-height: 1.5;
+}
+
+.activity-card-time {
+  font-size: 10px;
+  color: #75927d;
+  margin-top: 6px;
+  display: block;
+}

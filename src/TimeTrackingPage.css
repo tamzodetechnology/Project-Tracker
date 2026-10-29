@@ -1,0 +1,420 @@
+/* Premium Time Tracking Styles in Deep Green · Electric Lime */
+.time-page {
+  display: grid;
+  gap: 22px;
+  color: #e8f4ec;
+}
+
+.time-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.9fr);
+  gap: 18px;
+  align-items: stretch;
+}
+
+.timer-main-card {
+  position: relative;
+  background: radial-gradient(ellipse at 80% 20%, #17381255 0%, transparent 60%),
+              linear-gradient(145deg, #0d2217 0%, #07130d 100%);
+  border: 1px solid #1f4229;
+  border-radius: 16px;
+  padding: 26px 28px;
+  box-shadow: 0 14px 32px #0007, inset 0 1px 0 #8eff4c15;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.timer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.timer-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 13px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  background: #0d1e13;
+  border: 1px solid #1e3d25;
+  color: #92b09a;
+}
+
+.timer-status-pill.is-running {
+  background: #143513;
+  border-color: #3b7b25;
+  color: #8aff45;
+  box-shadow: 0 0 18px #72df0033;
+}
+
+.timer-status-pill i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #617767;
+}
+
+.timer-status-pill.is-running i {
+  background: #72df00;
+  box-shadow: 0 0 10px #72df00;
+  animation: timerPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes timerPulse {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  50% { transform: scale(1.3); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.8; }
+}
+
+.timer-digits-wrap {
+  text-align: center;
+  margin: 24px 0;
+  position: relative;
+}
+
+.timer-digits {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: clamp(48px, 6vw, 76px);
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: #f2fff2;
+  text-shadow: 0 0 24px #72df0025;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.timer-subtext {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #8da995;
+}
+
+.timer-quick-adds {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.quick-chip {
+  background: #0f2518;
+  border: 1px solid #1e422a;
+  border-radius: 7px;
+  color: #b5e4a8;
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.quick-chip:hover {
+  background: #173b24;
+  border-color: #357244;
+  color: #8cff4a;
+}
+
+.timer-config-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.timer-field {
+  display: grid;
+  gap: 6px;
+}
+
+.timer-field span {
+  font-size: 11px;
+  font-weight: 600;
+  color: #9eb6a4;
+}
+
+.timer-field select, .timer-field input {
+  height: 40px;
+  background: #09170e;
+  border: 1px solid #1c3c26;
+  border-radius: 9px;
+  padding: 0 12px;
+  color: #e2f2e6;
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.16s;
+}
+
+.timer-field select:focus, .timer-field input:focus {
+  border-color: #55b22b;
+}
+
+.timer-buttons-row {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.timer-btn-primary {
+  height: 46px;
+  padding: 0 26px;
+  border-radius: 11px;
+  background: #72df00;
+  color: #061506;
+  font-weight: 700;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 0 24px #72df0033;
+  transition: all 0.18s ease;
+}
+
+.timer-btn-primary:hover:not(:disabled) {
+  background: #87f512;
+  transform: translateY(-2px);
+  box-shadow: 0 0 32px #72df0055;
+}
+
+.timer-btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.timer-btn-secondary {
+  height: 46px;
+  padding: 0 20px;
+  border-radius: 11px;
+  background: #11281b;
+  border: 1px solid #244b30;
+  color: #dcefe1;
+  font-weight: 600;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.timer-btn-secondary:hover {
+  background: #193c27;
+  border-color: #3b764b;
+  color: #f0fff2;
+}
+
+/* Time Stats Sidebar */
+.time-stats-card {
+  background: linear-gradient(145deg, #0e2218 0%, #08150f 100%);
+  border: 1px solid #1f4229;
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.time-stat-box {
+  background: #09170e;
+  border: 1px solid #1a3822;
+  border-radius: 11px;
+  padding: 14px 16px;
+}
+
+.time-stat-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #8da995;
+  font-weight: 600;
+}
+
+.time-stat-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: #eef8f0;
+  margin: 6px 0 2px;
+  letter-spacing: -0.5px;
+}
+
+.time-stat-hint {
+  font-size: 10px;
+  color: #7d9685;
+}
+
+/* Entries and Log */
+.time-log-panel {
+  background: linear-gradient(145deg, #0d2117 0%, #07130e 100%);
+  border: 1px solid #1f4229;
+  border-radius: 16px;
+  padding: 22px 24px;
+  box-shadow: 0 10px 28px #0005;
+}
+
+.time-log-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.time-log-search {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: #09170f;
+  border: 1px solid #1c3c26;
+  border-radius: 9px;
+  padding: 0 13px;
+  height: 38px;
+  width: min(300px, 100%);
+  color: #8ba995;
+}
+
+.time-log-search input {
+  border: none;
+  background: transparent;
+  color: #e5f4e8;
+  font-size: 12px;
+  outline: none;
+  width: 100%;
+}
+
+.time-log-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.time-entry-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  background: #091810;
+  border: 1px solid #1a3824;
+  border-radius: 11px;
+  margin-bottom: 10px;
+  transition: all 0.16s ease;
+}
+
+.time-entry-card:hover {
+  background: #0e2417;
+  border-color: #2b5736;
+  transform: translateY(-1px);
+}
+
+.time-entry-left {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-width: 0;
+  flex: 1;
+}
+
+.time-entry-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #142e1b;
+  border: 1px solid #234d2d;
+  color: #72df00;
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+.time-entry-details {
+  min-width: 0;
+}
+
+.time-entry-title {
+  font-weight: 700;
+  font-size: 13px;
+  color: #ecf7ed;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.time-entry-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 10px;
+  color: #8aa492;
+  margin-top: 3px;
+  flex-wrap: wrap;
+}
+
+.time-entry-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.time-duration-chip {
+  padding: 5px 12px;
+  background: #122b17;
+  border: 1px solid #23522c;
+  border-radius: 8px;
+  color: #8cff44;
+  font-weight: 700;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.delete-entry-btn {
+  background: transparent;
+  border: none;
+  color: #8aa191;
+  padding: 7px;
+  border-radius: 7px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: all 0.15s;
+}
+
+.delete-entry-btn:hover {
+  background: #2b1414;
+  color: #ff8585;
+}
+
+@media (max-width: 860px) {
+  .time-hero-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .timer-main-card {
+    padding: 18px 16px;
+  }
+  .timer-config-grid {
+    grid-template-columns: 1fr;
+  }
+  .timer-digits {
+    font-size: 40px;
+  }
+  .timer-buttons-row {
+    flex-direction: column;
+  }
+  .timer-btn-primary, .timer-btn-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+}

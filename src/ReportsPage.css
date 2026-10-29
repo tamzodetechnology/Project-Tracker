@@ -1,0 +1,110 @@
+/* Reports Workspace Styles in Deep Green · Electric Lime */
+.reports-page {
+  display: grid;
+  gap: 22px;
+  color: #e8f4ec;
+}
+
+.reports-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.report-kpi-box {
+  background: linear-gradient(145deg, #0e2419 0%, #08150f 100%);
+  border: 1px solid #1f4229;
+  border-radius: 14px;
+  padding: 18px 20px;
+  box-shadow: 0 10px 26px #0005, inset 0 1px 0 #72df0012;
+  display: grid;
+  gap: 6px;
+  position: relative;
+  overflow: hidden;
+}
+
+.report-kpi-box span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 600;
+  color: #8da995;
+}
+
+.report-kpi-box b {
+  font-size: 28px;
+  font-weight: 800;
+  color: #f0fff2;
+  letter-spacing: -0.8px;
+}
+
+.report-kpi-box small {
+  font-size: 10px;
+  color: #7d9685;
+}
+
+.report-kpi-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: #142315;
+}
+
+.report-kpi-progress i {
+  display: block;
+  height: 100%;
+  background: #72df00;
+  box-shadow: 0 0 10px #72df00;
+}
+
+.reports-grid-two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.reports-card {
+  background: linear-gradient(145deg, #0d2117 0%, #07130e 100%);
+  border: 1px solid #1f4229;
+  border-radius: 16px;
+  padding: 22px 24px;
+  box-shadow: 0 10px 28px #0006;
+}
+
+.reports-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.reports-card-header h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #f2fff4;
+}
+
+.reports-card-header p {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: #8da995;
+}
+
+@media (max-width: 900px) {
+  .reports-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .reports-grid-two {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .reports-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
