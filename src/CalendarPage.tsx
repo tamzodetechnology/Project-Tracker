@@ -1,45 +1,693 @@
 import { useMemo, useState } from 'react';
-import { AlertCircle, ArrowRight, CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, Circle, Clock3, Flag, List, ListTodo, Plus, Search, Sparkles } from 'lucide-react';
+import {
+  AlertCircle,
+  ArrowRight,
+  CalendarDays,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Circle,
+  Clock3,
+  Flag,
+  List,
+  ListTodo,
+  Plus,
+  Search,
+  Sparkles,
+} from 'lucide-react';
+import type { Task, Milestone, Project } from './types';
+import './CalendarPage.css';
 
-type TaskStatus='To Do'|'In Progress'|'In Review'|'Done'|'Blocked'|'Cancelled';
-type Task={id:number;title:string;description?:string;projectId:number;projectName?:string;status:TaskStatus;priority:string;dueDate?:string};
-type Milestone={id:number;name:string;description?:string;projectId:number;projectName?:string;targetDate?:string;status:string};
-type Project={id:number;name:string};
-type View='Month'|'Week'|'Agenda';
-const dayKey=(d:Date)=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-const todayKey=dayKey(new Date());
-const dateLabel=(d:Date,options:Intl.DateTimeFormatOptions={weekday:'long',month:'long',day:'numeric',year:'numeric'})=>d.toLocaleDateString(undefined,options);
-const asLocal=(s:string)=>new Date(`${s.slice(0,10)}T00:00:00`);
-const monday=(d:Date)=>{const x=new Date(d.getFullYear(),d.getMonth(),d.getDate()),shift=(x.getDay()+6)%7;x.setDate(x.getDate()-shift);return x};
+interface CalendarPageProps {
+  tasks: Task[];
+  milestones: Milestone[];
+  projects: Project[];
+  date: Date;
+  setDate: (d: Date) => void;
+  onCreateTask: () => void;
+  onViewTasks: () => void;
+}
 
-export function CalendarPage({tasks,milestones,projects,date,setDate,onCreateTask,onViewTasks}:{tasks:Task[];milestones:Milestone[];projects:Project[];date:Date;setDate:(d:Date)=>void;onCreateTask:()=>void;onViewTasks:()=>void}){
- const [view,setView]=useState<View>('Month'),[selectedDate,setSelectedDate]=useState(todayKey),[project,setProject]=useState('All projects'),[query,setQuery]=useState('');
- const visibleTasks=useMemo(()=>tasks.filter(t=>t.dueDate&&t.status!=='Cancelled'&&(project==='All projects'||String(t.projectId)===project)&&(!query||`${t.title} ${t.description||''} ${t.projectName||''}`.toLowerCase().includes(query.toLowerCase()))),[tasks,project,query]);
- const visibleMilestones=useMemo(()=>milestones.filter(m=>m.targetDate&&(project==='All projects'||String(m.projectId)===project)&&(!query||`${m.name} ${m.description||''} ${m.projectName||''}`.toLowerCase().includes(query.toLowerCase()))),[milestones,project,query]);
- const getItems=(key:string)=>[...visibleTasks.filter(t=>t.dueDate===key).map(t=>({type:'task' as const,id:t.id,title:t.title,projectName:t.projectName||'Project',status:t.status,priority:t.priority,description:t.description||''})),...visibleMilestones.filter(m=>m.targetDate===key).map(m=>({type:'milestone' as const,id:m.id,title:m.name,projectName:m.projectName||'Project',status:m.status,priority:'',description:m.description||''}))];
- const selectedItems=getItems(selectedDate),now=asLocal(todayKey),plusWeek=new Date(now);plusWeek.setDate(plusWeek.getDate()+7);
- const dueToday=visibleTasks.filter(t=>t.dueDate===todayKey&&!['Done','Cancelled'].includes(t.status)).length;
- const overdue=visibleTasks.filter(t=>t.dueDate!<todayKey&&!['Done','Cancelled'].includes(t.status)).length;
- const weekCount=visibleTasks.filter(t=>t.dueDate!>=todayKey&&t.dueDate!<=dayKey(plusWeek)&&!['Done','Cancelled'].includes(t.status)).length;
- const monthPrefix=`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}`;
- const milestoneMonth=visibleMilestones.filter(m=>m.targetDate?.startsWith(monthPrefix)).length;
- const step=(delta:number)=>{if(view==='Week'){const next=new Date(date);next.setDate(next.getDate()+delta*7);setDate(next);setSelectedDate(dayKey(next))}else{const next=new Date(date.getFullYear(),date.getMonth()+delta,1);setDate(next);setSelectedDate(dayKey(next))}};
- const today=()=>{const d=new Date();setDate(d);setSelectedDate(todayKey)};
- const statusLabel=(s:string)=>s==='Done'?'Complete':s==='To Do'?'Pending':s;
- const eventChip=(item:ReturnType<typeof getItems>[number])=><button key={`${item.type}-${item.id}`} className={`calendar-chip ${item.type==='milestone'?'milestone-chip':''} ${item.status==='Done'?'complete-chip':''} ${item.type==='task'?`priority-${item.priority.toLowerCase()}`:''}`} title={`${item.title} · ${item.projectName}${item.type==='task'?` · ${statusLabel(item.status)} · ${item.priority} priority`:''}`} onClick={()=>setSelectedDate(item.type==='task'?visibleTasks.find(t=>t.id===item.id)?.dueDate||selectedDate:visibleMilestones.find(m=>m.id===item.id)?.targetDate||selectedDate)}>{item.type==='task'?<ListTodo size={12}/>:<Flag size={12}/>}<span><b>{item.title}</b><small>{item.projectName}</small></span>{item.type==='task'&&<i>{statusLabel(item.status)}</i>}</button>;
- const monthDates=()=>{const first=new Date(date.getFullYear(),date.getMonth(),1),lastDay=new Date(date.getFullYear(),date.getMonth()+1,0).getDate(),offset=(first.getDay()+6)%7,total=Math.ceil((offset+lastDay)/7)*7;return Array.from({length:total},(_,i)=>{const d=new Date(date.getFullYear(),date.getMonth(),i-offset+1);return {date:d,key:dayKey(d),inMonth:d.getMonth()===date.getMonth()}})};
- const weekDates=()=>Array.from({length:7},(_,i)=>{const d=monday(date);d.setDate(d.getDate()+i);return {date:d,key:dayKey(d),inMonth:true}});
- const gridDates=view==='Week'?weekDates():monthDates();
- const agendaItems=useMemo(()=>[...visibleTasks.filter(t=>t.dueDate).map(t=>({type:'task' as const,id:t.id,title:t.title,projectName:t.projectName||'Project',status:t.status,priority:t.priority,date:t.dueDate!,description:t.description||''})),...visibleMilestones.filter(m=>m.targetDate).map(m=>({type:'milestone' as const,id:m.id,title:m.name,projectName:m.projectName||'Project',status:m.status,priority:'',date:m.targetDate!,description:m.description||''}))].filter(x=>x.date.startsWith(monthPrefix)).sort((a,b)=>a.date.localeCompare(b.date)||(a.type==='milestone'?-1:1)),[visibleTasks,visibleMilestones,monthPrefix]);
- const upcomingItems=agendaItems.filter(item=>item.date>=todayKey&&!(item.type==='task'&&['Done','Cancelled'].includes(item.status)));
- const openDay=(key:string)=>{const next=asLocal(key);setDate(next);setSelectedDate(key)};
- return <div className="calendar-page"><div className="calendar-page-heading"><div><span className="calendar-kicker">WORKSPACE / PLANNING</span><h1>Calendar</h1><p>Your task deadlines and project milestones, arranged around your schedule.</p></div><div><button className="button secondary" onClick={onViewTasks}><ListTodo size={15}/> View tasks</button><button className="button primary" onClick={onCreateTask}><Plus size={15}/> Add task</button></div></div>
- <div className="calendar-search-row"><label><Search size={15}/><input aria-label="Search calendar events" placeholder="Search tasks or milestones…" value={query} onChange={e=>setQuery(e.target.value)}/></label><select aria-label="Filter calendar by project" value={project} onChange={e=>setProject(e.target.value)}><option>All projects</option>{projects.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
- <section className="calendar-focus-banner"><div className="calendar-focus-copy"><span className="calendar-focus-eyebrow"><Sparkles size={13}/> YOUR NEXT CHECKPOINT</span>{upcomingItems.length?<><h2>{upcomingItems[0].title}</h2><p>{upcomingItems[0].projectName} <i/> {upcomingItems[0].type==='milestone'?'Project milestone':`${upcomingItems[0].priority} priority task`}</p><button onClick={()=>openDay(upcomingItems[0].date)}>View {dateLabel(asLocal(upcomingItems[0].date),{month:'short',day:'numeric'})}<ArrowRight size={14}/></button></>:<><h2>Your schedule is clear</h2><p>Add task deadlines or milestones to plan your next steps.</p><button onClick={onCreateTask}>Add a task<Plus size={14}/></button></>}</div><div className="calendar-focus-side"><span>{date.toLocaleDateString(undefined,{month:'long',year:'numeric'})}</span><b>{upcomingItems.length}</b><small>upcoming checkpoints</small><div className="calendar-focus-dots"><i/><i/><i/><i/><i/><i/><i/></div><small>One step at a time</small></div></section>
- <div className="calendar-summary">{[{label:'Due today',count:dueToday,hint:'Open tasks',Icon:ListTodo},{label:'Overdue',count:overdue,hint:'Need a new date',Icon:AlertCircle},{label:'Next 7 days',count:weekCount,hint:'Open task deadlines',Icon:Clock3},{label:'Milestones this month',count:milestoneMonth,hint:'Project checkpoints',Icon:Flag}].map(({label,count,hint,Icon},i)=><div className={`calendar-stat calendar-stat-${i}`} key={label}><span>{label}</span><b>{count}</b><small><Icon size={12}/>{hint}</small></div>)}</div>
- <section className="calendar-workspace"><div className="calendar-main-panel"><div className="calendar-toolbar"><div className="calendar-month-controls"><button className="icon-button" onClick={()=>step(-1)} aria-label={view==='Week'?'Previous week':'Previous month'}><ChevronLeft size={18}/></button><div><span>{view==='Week'?'WEEK OF':'SCHEDULE'}</span><h2>{view==='Week'?`${dateLabel(monday(date),{month:'short',day:'numeric'})} – ${dateLabel(new Date(monday(date).getFullYear(),monday(date).getMonth(),monday(date).getDate()+6),{month:'short',day:'numeric',year:'numeric'})}`:date.toLocaleDateString(undefined,{month:'long',year:'numeric'})}</h2></div><button className="icon-button" onClick={()=>step(1)} aria-label={view==='Week'?'Next week':'Next month'}><ChevronRight size={18}/></button></div><div className="calendar-toolbar-actions"><button className="calendar-today-button" onClick={today}>Today</button><div className="calendar-view-toggle">{(['Month','Week','Agenda'] as const).map((v,i)=><button key={v} className={view===v?'active':''} onClick={()=>setView(v)}>{i===0?<CalendarDays size={13}/>:i===1?<Clock3 size={13}/>:<List size={13}/>}<span>{v}</span></button>)}</div></div></div>
- {view==='Agenda'?<div className="calendar-agenda-view">{agendaItems.length?agendaItems.map(item=><button className="calendar-agenda-row" key={`${item.type}-${item.id}`} onClick={()=>setSelectedDate(item.date)}><span className="calendar-agenda-date"><b>{asLocal(item.date).getDate()}</b><small>{asLocal(item.date).toLocaleDateString(undefined,{month:'short',weekday:'short'})}</small></span><span className={`calendar-agenda-icon ${item.type==='milestone'?'milestone':''}`}>{item.type==='task'?<ListTodo size={15}/>:<Flag size={15}/>}</span><span className="calendar-agenda-copy"><b>{item.title}</b><small>{item.projectName} · {item.type==='task'?statusLabel(item.status):'Milestone'}</small>{item.description&&<small className="calendar-agenda-description">{item.description}</small>}</span>{item.type==='task'&&<span className={`calendar-priority priority-${item.priority.toLowerCase()}`}>{item.priority}</span>}<ArrowRight size={14}/></button>):<div className="calendar-empty"><CalendarDays size={23}/><b>No scheduled work this month</b><span>Add due dates to tasks or milestones to plan ahead.</span><button className="button secondary" onClick={onCreateTask}><Plus size={14}/> Add a task</button></div>}</div>:<div className={`calendar-grid calendar-${view.toLowerCase()}-grid`}>{['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d=><div className="calendar-weekday" key={d}>{d}<span>{d.slice(0,1)}</span></div>)}{gridDates.map(({date:d,key,inMonth})=>{const items=getItems(key),isToday=key===todayKey,isSelected=key===selectedDate;return <div role="button" tabIndex={0} key={key} className={`calendar-day-cell ${inMonth?'':'outside-month'} ${isToday?'is-today':''} ${isSelected?'is-selected':''}`} onClick={()=>setSelectedDate(key)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setSelectedDate(key)}}} aria-label={`${dateLabel(d)}${items.length?`, ${items.length} events`:''}`} aria-pressed={isSelected}><span className="calendar-date-number"><b>{d.getDate()}</b>{items.length>0&&<i>{items.length}</i>}</span>{items.slice(0,view==='Week'?3:2).map(item=>eventChip(item))}{items.length>(view==='Week'?3:2)&&<small className="calendar-more">+{items.length-(view==='Week'?3:2)} more</small>}</div>})}</div>}
- <div className="calendar-legend"><span><i className="legend-task"/>Task deadline</span><span><i className="legend-milestone"/>Milestone</span><span><i className="legend-complete"/>Completed</span><span className="calendar-legend-note">Select a day to see its schedule</span></div></div>
- <aside className="calendar-day-agenda"><div className="day-agenda-heading"><span className="calendar-kicker">DAY AGENDA</span><h2>{dateLabel(asLocal(selectedDate),{weekday:'long',month:'long',day:'numeric'})}</h2><p>{selectedDate===todayKey?'Your schedule for today':selectedDate<todayKey?'Past schedule':'Planned for this day'}</p></div><div className="day-agenda-progress"><div><span>Day plan</span><b>{selectedItems.filter(x=>x.type==='task'&&x.status==='Done').length}/{selectedItems.filter(x=>x.type==='task').length} tasks complete</b></div><i><em style={{width:`${selectedItems.filter(x=>x.type==='task').length?selectedItems.filter(x=>x.type==='task'&&x.status==='Done').length/selectedItems.filter(x=>x.type==='task').length*100:0}%`}}/></i></div><div className="day-agenda-counts"><span><b>{selectedItems.filter(x=>x.type==='task').length}</b>tasks</span><span><b>{selectedItems.filter(x=>x.type==='milestone').length}</b>milestones</span></div><div className="day-agenda-list">{selectedItems.length?selectedItems.map(item=><div className={`day-agenda-item ${item.type==='milestone'?'agenda-milestone':''}`} key={`${item.type}-${item.id}`}><i className="agenda-item-icon">{item.type==='task'?<ListTodo size={14}/>:<Flag size={14}/>}</i><div><b>{item.title}</b><small>{item.projectName}</small>{item.description&&<small className="agenda-description">{item.description}</small>}<span>{item.type==='task'?<>{statusLabel(item.status)}{item.priority?` · ${item.priority} priority`:''}</>:`Milestone · ${item.status}`}</span></div>{item.type==='task'&&item.status==='Done'&&<CheckCircle2 className="agenda-done-icon" size={15}/>}</div>):<div className="day-agenda-empty"><Circle size={19}/><b>Nothing scheduled</b><span>This day is open. Add a task deadline or milestone when you’re ready.</span><button className="button secondary" onClick={onCreateTask}><Plus size={14}/> Add task</button></div>}</div><button className="day-agenda-link" onClick={onViewTasks}>Open task list <ArrowRight size={14}/></button></aside></section>
- </div>
+type CalendarView = 'Month' | 'Week' | 'Agenda';
+
+const dayKey = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+const todayKey = dayKey(new Date());
+
+const dateLabel = (
+  d: Date,
+  options: Intl.DateTimeFormatOptions = { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }
+) => d.toLocaleDateString(undefined, options);
+
+const asLocal = (s: string) => new Date(`${s.slice(0, 10)}T00:00:00`);
+
+const monday = (d: Date) => {
+  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const shift = (x.getDay() + 6) % 7;
+  x.setDate(x.getDate() - shift);
+  return x;
+};
+
+export function CalendarPage({
+  tasks,
+  milestones,
+  projects,
+  date,
+  setDate,
+  onCreateTask,
+  onViewTasks,
+}: CalendarPageProps) {
+  const [view, setView] = useState<CalendarView>('Month');
+  const [selectedDate, setSelectedDate] = useState(todayKey);
+  const [projectFilter, setProjectFilter] = useState('All projects');
+  const [query, setQuery] = useState('');
+
+  const visibleTasks = useMemo(
+    () =>
+      tasks.filter(
+        (t) =>
+          t.dueDate &&
+          t.status !== 'Cancelled' &&
+          (projectFilter === 'All projects' || String(t.projectId) === projectFilter) &&
+          (!query ||
+            `${t.title} ${t.description || ''} ${t.projectName || ''}`.toLowerCase().includes(query.toLowerCase()))
+      ),
+    [tasks, projectFilter, query]
+  );
+
+  const visibleMilestones = useMemo(
+    () =>
+      milestones.filter(
+        (m) =>
+          m.targetDate &&
+          (projectFilter === 'All projects' || String(m.projectId) === projectFilter) &&
+          (!query ||
+            `${m.name} ${m.description || ''} ${m.projectName || ''}`.toLowerCase().includes(query.toLowerCase()))
+      ),
+    [milestones, projectFilter, query]
+  );
+
+  const getItems = (key: string) => [
+    ...visibleTasks
+      .filter((t) => t.dueDate === key)
+      .map((t) => ({
+        type: 'task' as const,
+        id: t.id,
+        title: t.title,
+        projectName: t.projectName || 'Project',
+        status: t.status,
+        priority: t.priority,
+        description: t.description || '',
+      })),
+    ...visibleMilestones
+      .filter((m) => m.targetDate === key)
+      .map((m) => ({
+        type: 'milestone' as const,
+        id: m.id,
+        title: m.name,
+        projectName: m.projectName || 'Project',
+        status: m.status,
+        priority: '',
+        description: m.description || '',
+      })),
+  ];
+
+  const selectedItems = getItems(selectedDate);
+  const now = asLocal(todayKey);
+  const plusWeek = new Date(now);
+  plusWeek.setDate(plusWeek.getDate() + 7);
+
+  const dueToday = visibleTasks.filter((t) => t.dueDate === todayKey && t.status !== 'Done').length;
+  const overdue = visibleTasks.filter((t) => t.dueDate! < todayKey && t.status !== 'Done').length;
+  const weekCount = visibleTasks.filter(
+    (t) => t.dueDate! >= todayKey && t.dueDate! <= dayKey(plusWeek) && t.status !== 'Done'
+  ).length;
+
+  const monthPrefix = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+  const milestoneMonth = visibleMilestones.filter((m) => m.targetDate?.startsWith(monthPrefix)).length;
+
+  const step = (delta: number) => {
+    if (view === 'Week') {
+      const next = new Date(date);
+      next.setDate(next.getDate() + delta * 7);
+      setDate(next);
+      setSelectedDate(dayKey(next));
+    } else {
+      const next = new Date(date.getFullYear(), date.getMonth() + delta, 1);
+      setDate(next);
+      setSelectedDate(dayKey(next));
+    }
+  };
+
+  const jumpToToday = () => {
+    const d = new Date();
+    setDate(d);
+    setSelectedDate(todayKey);
+  };
+
+  const statusLabel = (s: string) => (s === 'Done' ? 'Complete' : s === 'To Do' ? 'Pending' : s);
+
+  const monthDates = () => {
+    const first = new Date(date.getFullYear(), date.getMonth(), 1);
+    const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+    const offset = (first.getDay() + 6) % 7;
+    const total = Math.ceil((offset + lastDay) / 7) * 7;
+
+    return Array.from({ length: total }, (_, i) => {
+      const d = new Date(date.getFullYear(), date.getMonth(), i - offset + 1);
+      return {
+        date: d,
+        key: dayKey(d),
+        inMonth: d.getMonth() === date.getMonth(),
+      };
+    });
+  };
+
+  const weekDates = () =>
+    Array.from({ length: 7 }, (_, i) => {
+      const d = monday(date);
+      d.setDate(d.getDate() + i);
+      return {
+        date: d,
+        key: dayKey(d),
+        inMonth: true,
+      };
+    });
+
+  const gridDates = view === 'Week' ? weekDates() : monthDates();
+
+  const agendaItems = useMemo(
+    () =>
+      [
+        ...visibleTasks
+          .filter((t) => t.dueDate)
+          .map((t) => ({
+            type: 'task' as const,
+            id: t.id,
+            title: t.title,
+            projectName: t.projectName || 'Project',
+            status: t.status,
+            priority: t.priority,
+            date: t.dueDate!,
+            description: t.description || '',
+          })),
+        ...visibleMilestones
+          .filter((m) => m.targetDate)
+          .map((m) => ({
+            type: 'milestone' as const,
+            id: m.id,
+            title: m.name,
+            projectName: m.projectName || 'Project',
+            status: m.status,
+            priority: '',
+            date: m.targetDate!,
+            description: m.description || '',
+          })),
+      ]
+        .filter((x) => x.date.startsWith(monthPrefix))
+        .sort((a, b) => a.date.localeCompare(b.date) || (a.type === 'milestone' ? -1 : 1)),
+    [visibleTasks, visibleMilestones, monthPrefix]
+  );
+
+  const upcomingItems = agendaItems.filter(
+    (item) => item.date >= todayKey && !(item.type === 'task' && ['Done', 'Cancelled'].includes(item.status))
+  );
+
+  const openDay = (key: string) => {
+    const next = asLocal(key);
+    setDate(next);
+    setSelectedDate(key);
+  };
+
+  return (
+    <div className="calendar-page">
+      {/* Page Header */}
+      <div className="calendar-page-heading">
+        <div>
+          <div className="calendar-kicker">
+            <Sparkles size={13} />
+            <span>SCHEDULE & TIMELINE HUB</span>
+          </div>
+          <h1>Calendar</h1>
+          <p>Task deadlines, sprint milestones, and project targets coordinated in one view.</p>
+        </div>
+        <div className="calendar-header-actions">
+          <button className="button secondary" onClick={onViewTasks}>
+            <ListTodo size={15} /> View Tasks
+          </button>
+          <button className="button primary" onClick={onCreateTask}>
+            <Plus size={15} /> Add Task
+          </button>
+        </div>
+      </div>
+
+      {/* 4 KPI Metrics */}
+      <div className="calendar-metrics">
+        <div className="calendar-metric-card" onClick={jumpToToday}>
+          <div className="calendar-metric-top">
+            <span>Due Today</span>
+            <ListTodo size={16} color="#72df00" />
+          </div>
+          <div className="calendar-metric-value">{dueToday}</div>
+          <div className="calendar-metric-hint">
+            <span className="dot" style={{ background: '#72df00' }} /> Urgent tasks for today
+          </div>
+        </div>
+
+        <div className="calendar-metric-card">
+          <div className="calendar-metric-top">
+            <span>Overdue Checkpoints</span>
+            <AlertCircle size={16} color="#f0886e" />
+          </div>
+          <div className="calendar-metric-value" style={{ color: '#f0886e' }}>
+            {overdue}
+          </div>
+          <div className="calendar-metric-hint">
+            <span className="dot" style={{ background: '#f0886e' }} /> Past target deadline
+          </div>
+        </div>
+
+        <div className="calendar-metric-card">
+          <div className="calendar-metric-top">
+            <span>Next 7 Days Workload</span>
+            <Clock3 size={16} color="#8cff45" />
+          </div>
+          <div className="calendar-metric-value" style={{ color: '#8cff45' }}>
+            {weekCount}
+          </div>
+          <div className="calendar-metric-hint">
+            <span className="dot" style={{ background: '#8cff45' }} /> Open tasks this week
+          </div>
+        </div>
+
+        <div className="calendar-metric-card">
+          <div className="calendar-metric-top">
+            <span>Milestones This Month</span>
+            <Flag size={16} color="#e5c158" />
+          </div>
+          <div className="calendar-metric-value" style={{ color: '#e5c158' }}>
+            {milestoneMonth}
+          </div>
+          <div className="calendar-metric-hint">
+            <span className="dot" style={{ background: '#e5c158' }} /> Major target checkpoints
+          </div>
+        </div>
+      </div>
+
+      {/* Focus Banner */}
+      <section className="calendar-focus-banner">
+        <div className="calendar-focus-copy">
+          <div className="calendar-focus-eyebrow">
+            <Sparkles size={13} />
+            <span>YOUR NEXT KEY CHECKPOINT</span>
+          </div>
+          {upcomingItems.length ? (
+            <>
+              <h2>{upcomingItems[0].title}</h2>
+              <p>
+                <b>{upcomingItems[0].projectName}</b>
+                <span className="sep-bullet">•</span>
+                <span>
+                  {upcomingItems[0].type === 'milestone'
+                    ? 'Major Project Milestone'
+                    : `${upcomingItems[0].priority} Priority Task`}
+                </span>
+                <span className="sep-bullet">•</span>
+                <span className="focus-due-date">
+                  Due {dateLabel(asLocal(upcomingItems[0].date), { month: 'short', day: 'numeric' })}
+                </span>
+              </p>
+              <button className="calendar-focus-btn" onClick={() => openDay(upcomingItems[0].date)}>
+                Jump to {dateLabel(asLocal(upcomingItems[0].date), { month: 'short', day: 'numeric' })}{' '}
+                <ArrowRight size={14} />
+              </button>
+            </>
+          ) : (
+            <>
+              <h2>Your schedule is clean and clear</h2>
+              <p>No immediate upcoming deadlines. Add tasks or project milestones to plan ahead.</p>
+              <button className="calendar-focus-btn" onClick={onCreateTask}>
+                Schedule a Task <Plus size={14} />
+              </button>
+            </>
+          )}
+        </div>
+
+        <div className="calendar-focus-side">
+          <span className="focus-side-month">
+            {date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
+          </span>
+          <b className="focus-side-number">{upcomingItems.length}</b>
+          <small className="focus-side-sub">Upcoming Checkpoints</small>
+          <div className="calendar-focus-dots">
+            <i />
+            <i />
+            <i />
+            <i />
+            <i />
+          </div>
+          <span className="focus-side-caption">One sprint at a time</span>
+        </div>
+      </section>
+
+      {/* Search and Project Filter Toolbar */}
+      <div className="calendar-toolbar-row">
+        <div className="calendar-search-box">
+          <Search size={15} />
+          <input
+            aria-label="Search calendar events"
+            placeholder="Search tasks, milestones, or projects..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
+
+        <select
+          aria-label="Filter calendar by project"
+          className="calendar-project-select"
+          value={projectFilter}
+          onChange={(e) => setProjectFilter(e.target.value)}
+        >
+          <option>All projects</option>
+          {projects.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Workspace Grid and Day Agenda Sidebar */}
+      <div className="calendar-workspace">
+        <div className="calendar-main-panel">
+          {/* Calendar Controls */}
+          <div className="calendar-controls">
+            <div className="calendar-nav-group">
+              <button
+                className="calendar-nav-arrow"
+                onClick={() => step(-1)}
+                aria-label={view === 'Week' ? 'Previous week' : 'Previous month'}
+              >
+                <ChevronLeft size={18} />
+              </button>
+
+              <div className="calendar-current-label">
+                <span className="calendar-view-eyebrow">{view === 'Week' ? 'CURRENT WEEK' : 'MONTH VIEW'}</span>
+                <h2>
+                  {view === 'Week'
+                    ? `${dateLabel(monday(date), { month: 'short', day: 'numeric' })} – ${dateLabel(
+                        new Date(
+                          monday(date).getFullYear(),
+                          monday(date).getMonth(),
+                          monday(date).getDate() + 6
+                        ),
+                        { month: 'short', day: 'numeric', year: 'numeric' }
+                      )}`
+                    : date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
+                </h2>
+              </div>
+
+              <button
+                className="calendar-nav-arrow"
+                onClick={() => step(1)}
+                aria-label={view === 'Week' ? 'Next week' : 'Next month'}
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+
+            <div className="calendar-view-actions">
+              <button className="calendar-today-pill" onClick={jumpToToday}>
+                Today
+              </button>
+
+              <div className="calendar-view-toggle">
+                {(['Month', 'Week', 'Agenda'] as const).map((v) => (
+                  <button
+                    key={v}
+                    className={`calendar-view-chip ${view === v ? 'active' : ''}`}
+                    onClick={() => setView(v)}
+                  >
+                    {v === 'Month' && <CalendarDays size={13} />}
+                    {v === 'Week' && <Clock3 size={13} />}
+                    {v === 'Agenda' && <List size={13} />}
+                    <span>{v}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Agenda View */}
+          {view === 'Agenda' ? (
+            <div className="calendar-agenda-view">
+              {agendaItems.length ? (
+                agendaItems.map((item) => {
+                  const itemDate = asLocal(item.date);
+                  return (
+                    <button
+                      className="calendar-agenda-row"
+                      key={`${item.type}-${item.id}`}
+                      onClick={() => setSelectedDate(item.date)}
+                    >
+                      <div className="calendar-agenda-date">
+                        <b>{itemDate.getDate()}</b>
+                        <small>{itemDate.toLocaleDateString(undefined, { month: 'short', weekday: 'short' })}</small>
+                      </div>
+
+                      <div className={`calendar-agenda-icon ${item.type === 'milestone' ? 'milestone' : ''}`}>
+                        {item.type === 'task' ? <ListTodo size={15} /> : <Flag size={15} />}
+                      </div>
+
+                      <div className="calendar-agenda-copy">
+                        <div className="agenda-title-line">
+                          <b>{item.title}</b>
+                          {item.type === 'milestone' ? (
+                            <span className="agenda-badge milestone-badge">Milestone</span>
+                          ) : (
+                            <span className={`agenda-badge priority-badge ${item.priority.toLowerCase()}`}>
+                              {item.priority}
+                            </span>
+                          )}
+                        </div>
+                        <span className="agenda-project-line">
+                          {item.projectName} • {item.type === 'task' ? statusLabel(item.status) : item.status}
+                        </span>
+                        {item.description && <p className="calendar-agenda-desc">{item.description}</p>}
+                      </div>
+
+                      <ArrowRight size={14} className="agenda-arrow" />
+                    </button>
+                  );
+                })
+              ) : (
+                <div className="calendar-empty">
+                  <CalendarDays size={28} color="#72df00" />
+                  <b>No scheduled checkpoints this month</b>
+                  <span>Add due dates to tasks or project milestones to plan ahead.</span>
+                  <button className="button primary" onClick={onCreateTask} style={{ marginTop: 10 }}>
+                    <Plus size={14} /> Add a Task
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            /* Month / Week Grid View */
+            <div className={`calendar-grid ${view === 'Week' ? 'calendar-week-grid' : 'calendar-month-grid'}`}>
+              <div className="calendar-weekdays-row">
+                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => (
+                  <div className="calendar-weekday-col" key={d}>
+                    <span>{d}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="calendar-cells-matrix">
+                {gridDates.map(({ date: d, key, inMonth }) => {
+                  const items = getItems(key);
+                  const isToday = key === todayKey;
+                  const isSelected = key === selectedDate;
+
+                  return (
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      key={key}
+                      className={`calendar-day-cell ${inMonth ? '' : 'outside-month'} ${
+                        isToday ? 'is-today' : ''
+                      } ${isSelected ? 'is-selected' : ''}`}
+                      onClick={() => setSelectedDate(key)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setSelectedDate(key);
+                        }
+                      }}
+                      aria-label={`${dateLabel(d)}${items.length ? `, ${items.length} events` : ''}`}
+                    >
+                      <div className="calendar-cell-header">
+                        <span className="calendar-cell-date-num">{d.getDate()}</span>
+                        {items.length > 0 && (
+                          <span className="calendar-cell-count-pill">{items.length}</span>
+                        )}
+                      </div>
+
+                      <div className="calendar-cell-chips">
+                        {items.slice(0, view === 'Week' ? 5 : 2).map((item) => (
+                          <div
+                            key={`${item.type}-${item.id}`}
+                            className={`calendar-chip ${item.type === 'milestone' ? 'milestone' : ''} ${
+                              item.status === 'Done' ? 'done' : ''
+                            } priority-${item.priority.toLowerCase()}`}
+                            title={`${item.title} • ${item.projectName}`}
+                          >
+                            <span className="chip-indicator" />
+                            <span className="chip-title">{item.title}</span>
+                          </div>
+                        ))}
+
+                        {items.length > (view === 'Week' ? 5 : 2) && (
+                          <div className="calendar-more-pill">
+                            +{items.length - (view === 'Week' ? 5 : 2)} more
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Legend */}
+          <div className="calendar-legend">
+            <div className="legend-item">
+              <span className="legend-dot" style={{ background: '#72df00' }} />
+              <span>Task Deadline</span>
+            </div>
+            <div className="legend-item">
+              <span className="legend-dot" style={{ background: '#e5c158' }} />
+              <span>Milestone</span>
+            </div>
+            <div className="legend-item">
+              <span className="legend-dot" style={{ background: '#4a6552' }} />
+              <span>Completed</span>
+            </div>
+            <div className="legend-note">Click any day to inspect its details</div>
+          </div>
+        </div>
+
+        {/* Day Agenda Sidebar */}
+        <aside className="calendar-day-agenda">
+          <div className="day-agenda-header">
+            <span className="day-agenda-eyebrow">DAY AGENDA</span>
+            <h2>{dateLabel(asLocal(selectedDate), { weekday: 'long', month: 'short', day: 'numeric' })}</h2>
+            <p>
+              {selectedDate === todayKey
+                ? 'Your priority commitments for today'
+                : selectedDate < todayKey
+                ? 'Past activity archive'
+                : 'Upcoming scheduled checkpoints'}
+            </p>
+          </div>
+
+          {/* Daily Progress */}
+          <div className="day-agenda-progress-block">
+            <div className="day-agenda-progress-meta">
+              <span>Day Completion</span>
+              <b>
+                {selectedItems.filter((x) => x.type === 'task' && x.status === 'Done').length} /{' '}
+                {selectedItems.filter((x) => x.type === 'task').length} Tasks
+              </b>
+            </div>
+            <div className="day-agenda-progress-track">
+              <div
+                className="day-agenda-progress-fill"
+                style={{
+                  width: `${
+                    selectedItems.filter((x) => x.type === 'task').length
+                      ? (selectedItems.filter((x) => x.type === 'task' && x.status === 'Done').length /
+                          selectedItems.filter((x) => x.type === 'task').length) *
+                        100
+                      : 0
+                  }%`,
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Counts */}
+          <div className="day-agenda-summary-chips">
+            <span className="day-summary-chip">
+              <b>{selectedItems.filter((x) => x.type === 'task').length}</b> Tasks
+            </span>
+            <span className="day-summary-chip">
+              <b>{selectedItems.filter((x) => x.type === 'milestone').length}</b> Milestones
+            </span>
+          </div>
+
+          {/* Item List */}
+          <div className="day-agenda-items-list">
+            {selectedItems.length ? (
+              selectedItems.map((item) => (
+                <div
+                  key={`${item.type}-${item.id}`}
+                  className={`day-agenda-card ${item.type === 'milestone' ? 'milestone-card' : ''} ${
+                    item.status === 'Done' ? 'done-card' : ''
+                  }`}
+                >
+                  <div className="day-agenda-card-icon">
+                    {item.type === 'task' ? <ListTodo size={15} /> : <Flag size={15} />}
+                  </div>
+
+                  <div className="day-agenda-card-body">
+                    <b>{item.title}</b>
+                    <small className="day-agenda-card-project">{item.projectName}</small>
+                    {item.description && (
+                      <p className="day-agenda-card-desc">{item.description}</p>
+                    )}
+                    <div className="day-agenda-card-meta">
+                      {item.type === 'task' ? (
+                        <>
+                          <span className={`status-tag status-${item.status.toLowerCase().replace(/\s+/g, '-')}`}>
+                            {statusLabel(item.status)}
+                          </span>
+                          {item.priority && (
+                            <span className={`priority-tag priority-${item.priority.toLowerCase()}`}>
+                              {item.priority}
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        <span className="milestone-tag">Milestone • {item.status}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {item.type === 'task' && item.status === 'Done' && (
+                    <CheckCircle2 size={16} color="#72df00" className="done-check" />
+                  )}
+                </div>
+              ))
+            ) : (
+              <div className="day-agenda-empty">
+                <Circle size={24} color="#355240" />
+                <b>No items scheduled</b>
+                <span>This day has no deadlines attached. You can assign a task or target milestone.</span>
+                <button className="button secondary" onClick={onCreateTask} style={{ marginTop: 8 }}>
+                  <Plus size={14} /> Schedule Task
+                </button>
+              </div>
+            )}
+          </div>
+
+          <button className="day-agenda-full-link" onClick={onViewTasks}>
+            <span>Explore all workspace tasks</span>
+            <ArrowRight size={14} />
+          </button>
+        </aside>
+      </div>
+    </div>
+  );
 }

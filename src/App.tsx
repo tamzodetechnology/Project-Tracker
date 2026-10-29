@@ -2,38 +2,29 @@ import { useEffect, useState, useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Activity,
-  AlertCircle,
   ArrowRight,
-  ArrowUpRight,
   CalendarDays,
   BarChart3,
-  Check,
   CheckCircle2,
-  Circle,
-  Clock3,
   Command,
-  FileText,
   Flag,
   FolderKanban,
   LayoutDashboard,
   ListTodo,
   Menu,
   MoreHorizontal,
-  Plus,
   RefreshCw,
   Search,
   Settings,
   Sparkles,
-  Target,
   Timer,
-  TrendingUp,
   X,
 } from 'lucide-react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import axios from 'axios';
-import dashboardHero from './assets/dashboard-hero.png';
+import { DashboardPage } from './DashboardPage';
 import { ProjectWorkspacePage } from './ProjectWorkspacePage';
 import { TasksPage } from './TasksPage';
 import { ProjectsPage } from './ProjectsPage';
@@ -57,7 +48,6 @@ import type {
   ChartStatusItem,
   ChartTrendItem,
   TaskStatus,
-  Status,
 } from './types';
 
 import {
@@ -69,6 +59,7 @@ import {
 } from './mockData';
 import type { WorkspaceData } from './mockData';
 
+import './DashboardPage.css';
 import './ProjectsPage.css';
 import './TasksPage.css';
 import './CalendarPage.css';
@@ -94,13 +85,6 @@ const nav = [
   ['Reports', BarChart3],
   ['Settings & Backup', Settings],
 ] as const;
-
-const colors = ['#81df28', '#26ba7b', '#a2c75a', '#46d0a3'];
-
-function fmtDate(date?: string) {
-  if (!date) return 'No deadline';
-  return new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric' }).format(new Date(`${date}T00:00:00`));
-}
 
 function fmtDuration(seconds: number) {
   const hours = Math.floor(seconds / 3600);
@@ -216,24 +200,6 @@ function App() {
       return () => clearTimeout(t);
     }
   }, [toast]);
-
-  const today = new Date();
-  const weekAhead = new Date();
-  today.setHours(0, 0, 0, 0);
-  weekAhead.setDate(weekAhead.getDate() + 7);
-  const localDate = (d: Date) =>
-    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  const todayKey = localDate(today);
-  const weekKey = localDate(weekAhead);
-
-  const dueSoon = tasks
-    .filter((t) => !['Done', 'Cancelled'].includes(t.status) && t.dueDate && t.dueDate >= todayKey && t.dueDate <= weekKey)
-    .sort((a, b) => (a.dueDate || '').localeCompare(b.dueDate || ''))
-    .slice(0, 4);
-
-  const high = tasks
-    .filter((t) => ['High', 'Urgent', 'Critical'].includes(t.priority) && !['Done', 'Cancelled'].includes(t.status))
-    .slice(0, 3);
 
   // Mutations with optimistic local updates + backend sync
   const mutate = async (kind: 'project' | 'task' | 'update', data: any, id?: number) => {
@@ -724,12 +690,11 @@ function App() {
               transition={{ duration: 0.18 }}
             >
               {page === 'Dashboard' ? (
-                <Dashboard
+                <DashboardPage
                   projects={projects}
+                  tasks={tasks}
                   activities={activities}
                   metrics={metrics}
-                  dueSoon={dueSoon}
-                  high={high}
                   weeklyHours={weeklyHours}
                   timeByProject={timeByProject}
                   taskStatus={taskStatus}
@@ -899,659 +864,6 @@ function App() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
-  );
-}
-
-function Header({
-  eyebrow,
-  title,
-  description,
-  actions,
-}: {
-  eyebrow: string;
-  title: string;
-  description: string;
-  actions?: React.ReactNode;
-}) {
-  return (
-    <div className="page-heading">
-      <div>
-        <div className="eyebrow">{eyebrow}</div>
-        <h1>{title}</h1>
-        <p>{description}</p>
-      </div>
-      {actions && <div className="heading-actions">{actions}</div>}
-    </div>
-  );
-}
-
-function Dashboard({
-  projects,
-  activities,
-  metrics,
-  dueSoon,
-  high,
-  weeklyHours,
-  timeByProject,
-  taskStatus,
-  onTask,
-  onUpdate,
-  onProject,
-  onPage,
-  onTaskStatus,
-  changeStatus,
-}: {
-  projects: Project[];
-  activities: ActivityItem[];
-  metrics: WorkspaceMetrics;
-  dueSoon: Task[];
-  high: Task[];
-  weeklyHours: any[];
-  timeByProject: any[];
-  taskStatus: any[];
-  onTask: () => void;
-  onUpdate: () => void;
-  onProject: () => void;
-  onPage: (p: string) => void;
-  onTaskStatus: (status: string) => void;
-  changeStatus: (t: Task, s: TaskStatus) => void;
-}) {
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-  const featuredProject =
-    projects.find((p) => p.status === 'In Progress') ||
-    projects.find((p) => p.status === 'Planned') ||
-    projects.find((p) => p.status === 'On Hold') ||
-    projects[0];
-  const otherProjects = projects.filter((p) => p.id !== featuredProject?.id).slice(0, 3);
-  const taskTotal = metrics.completed + metrics.pending;
-
-  const metricCards: any[] = [
-    [FolderKanban, 'Total projects', metrics.total, 'Across your workspace', 'teal', null],
-    [
-      TrendingUp,
-      'In progress',
-      metrics.active,
-      'Moving forward now',
-      'green',
-      metrics.total ? (metrics.active / metrics.total) * 100 : null,
-    ],
-    [
-      CheckCircle2,
-      'Tasks completed',
-      metrics.completed,
-      'Leaf tasks marked done',
-      'blue',
-      taskTotal ? (metrics.completed / taskTotal) * 100 : null,
-    ],
-    [
-      ListTodo,
-      'Pending tasks',
-      metrics.pending,
-      'Still on your list',
-      'purple',
-      taskTotal ? (metrics.pending / taskTotal) * 100 : null,
-    ],
-    [Clock3, 'Time tracked', fmtDuration(metrics.totalTimeSeconds || 0), 'Recorded from time entries', 'green', null],
-    [AlertCircle, 'Overdue tasks', metrics.overdue, 'Past due and unfinished', 'orange', null],
-  ];
-
-  return (
-    <>
-      <Header
-        eyebrow={new Intl.DateTimeFormat(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
-          .format(new Date())
-          .toUpperCase()}
-        title={greeting}
-        description="Your projects, tasks, and milestones at a glance."
-        actions={
-          <>
-            <button className="button secondary" onClick={onTask}>
-              <Plus size={16} /> Add task
-            </button>
-            <button className="button primary" onClick={onProject}>
-              <Plus size={16} /> New project
-            </button>
-          </>
-        }
-      />
-
-      <section className="personal-banner">
-        <div className="personal-banner-copy">
-          <span className="eyebrow">YOUR PERSONAL WORKSPACE</span>
-          <h2>Your ideas, in motion.</h2>
-          <p>Choose a clear next step and keep your projects moving forward.</p>
-        </div>
-        <img src={dashboardHero} alt="Developer working on project tracker workspace" />
-      </section>
-
-      <div className="metric-grid">
-        {metricCards.map(([I, label, val, hint, color, ratio]: any) => (
-          <div className={`metric-card ${ratio !== null ? 'has-progress' : ''}`} key={label}>
-            <div className="metric-top">
-              <span>{label}</span>
-              <div className={`metric-icon ${color}`}>
-                <I size={17} />
-              </div>
-            </div>
-            <div className="metric-value">{val}</div>
-            <div className="metric-hint">
-              <span className={`dot ${color}`} />
-              {hint}
-            </div>
-            {ratio !== null && (
-              <div className="metric-progress" aria-label={`${Math.round(ratio)} percent`}>
-                <span style={{ width: `${Math.max(0, Math.min(100, ratio))}%` }} />
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-
-      <div className="charts-grid">
-        <section className="panel chart-panel">
-          <div className="section-head">
-            <div>
-              <h2>Task status</h2>
-              <p>Current active workload</p>
-            </div>
-            <button className="text-button" onClick={() => onPage('My Tasks')}>
-              View tasks <ArrowRight size={14} />
-            </button>
-          </div>
-          <TaskDoughnut data={taskStatus} onClick={(status) => onTaskStatus(status)} />
-        </section>
-
-        <section className="panel chart-panel">
-          <div className="section-head">
-            <div>
-              <h2>This week</h2>
-              <p>Tracked time by day · hours</p>
-            </div>
-            <button className="text-button" onClick={() => onPage('Time Tracking')}>
-              Time report <ArrowRight size={14} />
-            </button>
-          </div>
-          <HoursBarChart data={weeklyHours} />
-        </section>
-      </div>
-
-      <section className="panel chart-panel project-time-panel">
-        <div className="section-head">
-          <div>
-            <h2>Time by project</h2>
-            <p>Actual time entries, current week</p>
-          </div>
-          <button className="text-button" onClick={() => onPage('Reports')}>
-            Open reports <ArrowRight size={14} />
-          </button>
-        </div>
-        <ProjectTimeChart data={timeByProject} />
-      </section>
-
-      <section className="section projects-section">
-        {featuredProject ? (
-          <>
-            <FeaturedProject p={featuredProject} onBrowse={() => onPage('Projects')} />
-            {otherProjects.length > 0 && (
-              <>
-                <div className="section-head more-projects-head">
-                  <div>
-                    <h2>More projects</h2>
-                    <p>Your other work in progress</p>
-                  </div>
-                  <button className="text-button" onClick={() => onPage('Projects')}>
-                    All projects <ArrowRight size={15} />
-                  </button>
-                </div>
-                <div className="project-grid">
-                  {otherProjects.map((p, i) => (
-                    <ProjectCard key={p.id} p={p} color={colors[(i + 1) % 4]} />
-                  ))}
-                </div>
-              </>
-            )}
-          </>
-        ) : (
-          <Empty
-            title="Your next project starts here"
-            body="Create a project to give your ideas a clear plan and a place to grow."
-            action="Create project"
-            onClick={onProject}
-          />
-        )}
-      </section>
-
-      <div className="lower-grid">
-        <section className="panel">
-          <div className="section-head">
-            <div>
-              <h2>Upcoming deadlines</h2>
-              <p>What’s coming up next</p>
-            </div>
-            <button className="icon-button" aria-label="View calendar" onClick={() => onPage('Calendar')}>
-              <ArrowUpRight size={17} />
-            </button>
-          </div>
-          {dueSoon.length ? (
-            <div className="deadline-list">
-              {dueSoon.map((t) => (
-                <div className="deadline-row" key={t.id}>
-                  <button className="task-check" onClick={() => changeStatus(t, 'Done')} aria-label={`Complete ${t.title}`}>
-                    <Circle size={19} />
-                  </button>
-                  <div className="deadline-copy">
-                    <b>{t.title}</b>
-                    <small>{t.projectName || 'Project'}</small>
-                  </div>
-                  <span className="date-pill">
-                    <CalendarDays size={13} />
-                    {fmtDate(t.dueDate)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <Empty title="Nothing due soon" body="Tasks with a deadline will show up here." />
-          )}
-        </section>
-
-        <section className="panel">
-          <div className="section-head">
-            <div>
-              <h2>Priority focus</h2>
-              <p>Tasks that need attention</p>
-            </div>
-            <span className="priority-count">
-              {high.length} {high.length === 1 ? 'task' : 'tasks'}
-            </span>
-          </div>
-          {high.length ? (
-            <div className="focus-list">
-              {high.map((t) => (
-                <div className="focus-row" key={t.id}>
-                  <span className={`priority-dot ${t.priority.toLowerCase()}`} />
-                  <div>
-                    <b>{t.title}</b>
-                    <small>
-                      {t.projectName || 'Personal task'} · {t.status}
-                    </small>
-                  </div>
-                  <span className={`priority-badge ${t.priority.toLowerCase()}`}>{t.priority}</span>
-                  <button
-                    className="icon-button"
-                    onClick={() => changeStatus(t, t.status === 'Done' ? 'To Do' : 'Done')}
-                    aria-label="Complete task"
-                  >
-                    <Check size={15} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <Empty title="All clear" body="High and urgent priority tasks will appear here." />
-          )}
-        </section>
-
-        <section className="panel activity-panel">
-          <div className="section-head">
-            <div>
-              <h2>Recent activity</h2>
-              <p>A little progress goes a long way</p>
-            </div>
-            <button className="text-button" onClick={() => onPage('Activity History')}>
-              View all <ArrowRight size={15} />
-            </button>
-          </div>
-          {activities.length ? (
-            <div className="activity-list">
-              {activities.slice(0, 4).map((a) => (
-                <ActivityRow key={a.id} item={a} />
-              ))}
-            </div>
-          ) : (
-            <Empty title="Your story starts here" body="Project and task updates will appear as you work." />
-          )}
-        </section>
-
-        <section className="note-card">
-          <div className="note-icon">
-            <FileText size={17} />
-          </div>
-          <span className="eyebrow">A MOMENT TO REFLECT</span>
-          <h3>Capture today’s progress</h3>
-          <p>Log what you worked on, what’s next, and anything in your way.</p>
-          <button className="button note-button" onClick={onUpdate}>
-            Write a daily note <Plus size={15} />
-          </button>
-        </section>
-      </div>
-    </>
-  );
-}
-
-function TaskDoughnut({ data, onClick }: { data: any[]; onClick: (status: string) => void }) {
-  const count = (statuses: string[]) =>
-    data.filter((d) => statuses.includes(d.status)).reduce((sum, d) => sum + Number(d.count || 0), 0);
-  const parts = [
-    { label: 'Completed', filter: 'Done', value: count(['Done']), color: '#76dc18' },
-    { label: 'In progress', filter: 'In Progress', value: count(['In Progress']), color: '#36b582' },
-    { label: 'Pending', filter: 'Pending', value: count(['To Do', 'In Review']), color: '#627b5d' },
-    { label: 'Blocked', filter: 'Blocked', value: count(['Blocked']), color: '#d69d38' },
-  ];
-  const total = parts.reduce((sum, p) => sum + p.value, 0);
-  const circ = 2 * Math.PI * 39;
-  let used = 0;
-  return (
-    <div className="donut-layout">
-      <div className="donut-wrap">
-        <svg viewBox="0 0 100 100" role="img" aria-label={`${total} active tasks by status`}>
-          <circle cx="50" cy="50" r="39" fill="none" stroke="#162414" strokeWidth="11" />
-          {parts
-            .filter((p) => p.value > 0)
-            .map((p) => {
-              const length = total ? (circ * p.value) / total : 0;
-              const offset = used;
-              used += length;
-              return (
-                <circle
-                  key={p.label}
-                  className="donut-segment"
-                  cx="50"
-                  cy="50"
-                  r="39"
-                  fill="none"
-                  stroke={p.color}
-                  strokeWidth="11"
-                  strokeDasharray={`${length} ${circ - length}`}
-                  strokeDashoffset={-offset}
-                  transform="rotate(-90 50 50)"
-                  onClick={() => onClick(p.filter)}
-                  tabIndex={0}
-                  role="button"
-                  aria-label={`${p.label}, ${p.value} tasks`}
-                  onKeyDown={(e) => e.key === 'Enter' && onClick(p.filter)}
-                />
-              );
-            })}
-        </svg>
-        <div className="donut-center">
-          <b>{total}</b>
-          <small>active tasks</small>
-        </div>
-      </div>
-      <div className="chart-legend">
-        {parts.map((p) => (
-          <button key={p.label} onClick={() => onClick(p.filter)} className="legend-item">
-            <i style={{ background: p.color }} />
-            <span>{p.label}</span>
-            <b>{p.value}</b>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function HoursBarChart({ data }: { data: any[] }) {
-  const max = Math.max(1, ...data.map((d) => Number(d.seconds || 0)));
-  return (
-    <div className="hours-chart">
-      {data.map((d: any) => {
-        const date = new Date(`${d.date}T00:00:00`);
-        const hours = Number(d.seconds || 0) / 3600;
-        return (
-          <div
-            className="hours-day"
-            key={d.date}
-            title={`${date.toLocaleDateString(undefined, {
-              weekday: 'long',
-              month: 'short',
-              day: 'numeric',
-            })}: ${hours.toFixed(2)} hours`}
-          >
-            <span className="hours-value">{hours ? hours.toFixed(1) : '0'}</span>
-            <div className="hours-track">
-              <i style={{ height: `${Math.max(hours ? 5 : 0, (Number(d.seconds || 0) / max) * 100)}%` }} />
-            </div>
-            <small>{date.toLocaleDateString(undefined, { weekday: 'short' })}</small>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function ProjectTimeChart({ data }: { data: any[] }) {
-  const max = Math.max(1, ...data.map((d) => Number(d.seconds || 0)));
-  if (!data.length)
-    return <Empty title="No tracked time yet" body="Start a timer or add a manual time entry to see project distribution." />;
-  return (
-    <div className="project-time-chart">
-      {data.map((d: any) => (
-        <div className="project-time-row" key={d.projectId}>
-          <span title={d.projectName}>{d.projectName}</span>
-          <div className="project-time-track">
-            <i style={{ width: `${Math.max(Number(d.seconds) ? 2 : 0, (Number(d.seconds || 0) / max) * 100)}%` }} />
-          </div>
-          <b>{fmtDuration(Number(d.seconds || 0))}</b>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function FeaturedProject({ p, onBrowse }: { p: Project; onBrowse: () => void }) {
-  const progress = Math.max(0, Math.min(100, p.progress || 0));
-  return (
-    <article className="featured-project">
-      <div className="featured-project-copy">
-        <div className="featured-project-meta">
-          <span className="eyebrow">YOUR CURRENT FOCUS</span>
-          <span className={`status-badge ${p.status.toLowerCase().replace(' ', '-')}`}>
-            <i />
-            {p.status}
-          </span>
-        </div>
-        <h2>{p.name}</h2>
-        <p>{p.description || p.category || 'Keep this project moving one step at a time.'}</p>
-        <div className="featured-project-details">
-          <span>
-            <CalendarDays size={15} />
-            {p.deadline ? `Due ${fmtDate(p.deadline)}` : 'No deadline set'}
-          </span>
-          <span>
-            <ListTodo size={15} />
-            {p.completedTasks || 0} of {p.taskCount || 0} tasks complete
-          </span>
-        </div>
-        <button className="text-button" onClick={onBrowse}>
-          View all projects <ArrowRight size={15} />
-        </button>
-      </div>
-      <div
-        className="featured-progress-ring"
-        style={{ '--progress': `${progress}%` } as React.CSSProperties}
-        role="img"
-        aria-label={`${progress}% complete`}
-      >
-        <div>
-          <b>{progress}%</b>
-          <small>complete</small>
-        </div>
-      </div>
-    </article>
-  );
-}
-
-function ProjectCard({
-  p,
-  color,
-  onDelete,
-  onEdit,
-  onStatus,
-  onStage,
-  onOpen,
-  menuOpen = false,
-  onMenuToggle = () => {},
-  onMenuClose = () => {},
-}: {
-  p: Project;
-  color: string;
-  onDelete?: () => void;
-  onEdit?: (p: Project) => void;
-  onStatus?: (p: Project, status: Status) => void;
-  onStage?: (p: Project, stage: NonNullable<Project['currentStage']>) => void;
-  onOpen?: () => void;
-  menuOpen?: boolean;
-  onMenuToggle?: () => void;
-  onMenuClose?: () => void;
-}) {
-  const stages = ['Planning', 'Design', 'Development', 'Testing', 'Deployment', 'Completed'];
-  return (
-    <article className={`project-card ${menuOpen ? 'menu-is-open' : ''}`}>
-      <div className="project-card-top">
-        <div className="project-symbol" style={{ '--project-color': color } as React.CSSProperties}>
-          <FolderKanban size={18} />
-        </div>
-        <span className={`status-badge ${p.status.toLowerCase().replace(' ', '-')}`}>
-          <i />
-          {p.status}
-        </span>
-        {(onDelete || onEdit || onStatus) && (
-          <div className="project-menu-wrap">
-            <button
-              className="icon-button tiny"
-              aria-label={`Options for ${p.name}`}
-              aria-expanded={menuOpen}
-              onClick={onMenuToggle}
-            >
-              <MoreHorizontal size={17} />
-            </button>
-            {menuOpen && (
-              <div className="project-dropdown-menu">
-                {onEdit && (
-                  <button
-                    className="dropdown-item"
-                    onClick={() => {
-                      onMenuClose();
-                      onEdit(p);
-                    }}
-                  >
-                    Edit project
-                  </button>
-                )}
-                {onStatus && (
-                  <button
-                    className="dropdown-item"
-                    onClick={() => {
-                      onMenuClose();
-                      onStatus(p, p.status === 'Archived' ? 'Planned' : 'Archived');
-                    }}
-                  >
-                    {p.status === 'Archived' ? 'Reopen project' : 'Archive project'}
-                  </button>
-                )}
-                {onDelete && (
-                  <button
-                    className="dropdown-item danger"
-                    onClick={() => {
-                      onMenuClose();
-                      onDelete();
-                    }}
-                  >
-                    Delete project
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-      <h3>
-        <button className="project-title-open" onClick={onOpen}>
-          {p.name}
-        </button>
-      </h3>
-      <p className="project-desc">{p.description || p.category}</p>
-      <div className="project-stage-row">
-        <label>
-          Stage
-          <select
-            aria-label={`Stage for ${p.name}`}
-            value={p.currentStage || 'Planning'}
-            disabled={!onStage}
-            onChange={(e) => onStage?.(p, e.target.value as NonNullable<Project['currentStage']>)}
-          >
-            {stages.map((stage) => (
-              <option key={stage}>{stage}</option>
-            ))}
-          </select>
-        </label>
-      </div>
-      <div className="progress-label">
-        <span>Progress</span>
-        <b>{p.progress}%</b>
-      </div>
-      <div className="progress-track">
-        <div style={{ width: `${p.progress}%`, background: color }} />
-      </div>
-      <div className="project-card-foot">
-        <span>
-          <ListTodo size={14} />
-          {p.completedTasks || 0}/{p.taskCount || 0} tasks
-        </span>
-        <span className="priority-label">
-          <i className={`priority-dot ${p.priority.toLowerCase()}`} />
-          {p.priority} priority
-        </span>
-      </div>
-    </article>
-  );
-}
-
-function ActivityRow({ item, large = false }: { item: ActivityItem; large?: boolean }) {
-  return (
-    <div className={`activity-row ${large ? 'large' : ''}`}>
-      <div className="activity-icon">
-        <Activity size={15} />
-      </div>
-      <div className="activity-copy">
-        <b>
-          {item.action} <span>{item.entityName}</span>
-        </b>
-        {item.details && <small>{item.details}</small>}
-        <time>{new Date(item.createdAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</time>
-      </div>
-    </div>
-  );
-}
-
-function Empty({
-  title,
-  body,
-  action,
-  onClick,
-}: {
-  title: string;
-  body: string;
-  action?: string;
-  onClick?: () => void;
-}) {
-  return (
-    <div className="empty">
-      <div className="empty-icon">
-        <Target size={20} />
-      </div>
-      <b>{title}</b>
-      <p>{body}</p>
-      {action && onClick && (
-        <button className="button secondary" onClick={onClick}>
-          <Plus size={15} />
-          {action}
-        </button>
-      )}
     </div>
   );
 }

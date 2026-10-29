@@ -1,49 +1,484 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Activity, ArrowDownUp, CalendarDays, Check, CheckCircle2, ChevronLeft, ChevronRight, Circle, Clock3, List, LoaderCircle, Play, Plus, Search, SlidersHorizontal, Sparkles, SquareKanban, Timer, X } from 'lucide-react';
-import axios from 'axios';
+import { useMemo, useState } from 'react';
+import {
+  CheckCircle2,
+  Circle,
+  Plus,
+  Search,
+  Grid2X2,
+  List,
+  CalendarDays,
+  Edit2,
+  Trash2,
+  FolderKanban,
+  Clock,
+  AlertCircle,
+  X,
+  Sparkles,
+} from 'lucide-react';
+import type { Task, Project, Milestone, TaskStatus, Priority } from './types';
+import './TasksPage.css';
 
-type Status='To Do'|'In Progress'|'In Review'|'Done'|'Blocked'|'Cancelled';
-type Priority='Low'|'Medium'|'High'|'Urgent'|'Critical';
-type Task={id:number;title:string;description?:string;projectId:number;projectName?:string;projectPhaseId?:number;milestoneId?:number;milestoneName?:string;parentTaskId?:number;status:Status;priority:Priority;startDate?:string;dueDate?:string;estimatedMinutes?:number;actualSeconds?:number;dependencyReady?:boolean;dependencyCount?:number;assignee?:string;notes?:string;createdAt?:string;completedAt?:string};
-type Project={id:number;name:string}; type Milestone={id:number;name:string;projectId:number;targetDate?:string;status?:string};
-const api=axios.create({baseURL:import.meta.env.VITE_API_URL||'http://localhost:8080/api',timeout:10000});
-const states:Status[]=['To Do','In Progress','In Review','Blocked','Done','Cancelled'];
-const priorities:Priority[]=['Critical','Urgent','High','Medium','Low'];
-const dayKey=(d:Date)=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-const today=()=>dayKey(new Date());
-const prettyDate=(v?:string)=>v?new Date(`${v.slice(0,10)}T00:00:00`).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}):'Not set';
-const duration=(s=0)=>{const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?`${h}h ${m}m`:`${m}m`};
-const leaf=(t:Task,all:Task[])=>!all.some(x=>x.parentTaskId===t.id);
-function Header({title,description,actions}:{title:string;description:string;actions?:React.ReactNode}){return <div className="page-heading"><div><div className="eyebrow">WORKSPACE / TASK MANAGEMENT</div><h1>{title}</h1><p>{description}</p></div><div className="heading-actions">{actions}</div></div>}
-function Donut({rows,total,onPick}:{rows:{name:string;count:number;color:string}[];total:number;onPick:(s:string)=>void}){let acc=0;const circumference=2*Math.PI*46;return <div className="mytasks-donut-wrap"><svg viewBox="0 0 120 120" role="img" aria-label={`Task status breakdown, ${total} tasks`}>{rows.map(r=>{const len=total?circumference*r.count/total:0,offset=acc;acc+=len;return <circle key={r.name} cx="60" cy="60" r="46" fill="none" stroke={r.color} strokeWidth="12" strokeDasharray={`${len} ${circumference-len}`} strokeDashoffset={-offset} transform="rotate(-90 60 60)" role="button" tabIndex={0} aria-label={`${r.name}: ${r.count}`} onClick={()=>onPick(r.name)} onKeyDown={e=>e.key==='Enter'&&onPick(r.name)}/>})}</svg><div><b>{total}</b><small>tasks</small></div></div>}
-export function TasksPage({tasks,projects,milestones,initialStatus,onCreate,onEdit,onDelete,changeStatus,timer,reload,notify}:{tasks:Task[];projects:Project[];milestones:Milestone[];initialStatus:string;onCreate:()=>void;onEdit:(t:Task)=>void;onDelete:(t:Task)=>void;changeStatus:(t:Task,s:Status)=>void;timer:{status:string;taskId?:number;projectId?:number};reload:()=>Promise<void>;notify:(s:string)=>void}){
- const [query,setQuery]=useState(''),[project,setProject]=useState('All projects'),[status,setStatus]=useState(initialStatus||'All statuses'),[priority,setPriority]=useState('All priorities'),[due,setDue]=useState('Any due date'),[milestone,setMilestone]=useState('All milestones'),[from,setFrom]=useState(()=>{const d=new Date();d.setDate(d.getDate()-6);return dayKey(d)}),[to,setTo]=useState(today),[sort,setSort]=useState('due'),[view,setView]=useState<'List'|'Board'|'Calendar'>('List'),[page,setPage]=useState(0),[selected,setSelected]=useState<number[]>([]),[detail,setDetail]=useState<any>(null),[detailBusy,setDetailBusy]=useState(false),[month,setMonth]=useState(new Date()),[analytics,setAnalytics]=useState<any>(null),[bulkStatus,setBulkStatus]=useState(''),[bulkPriority,setBulkPriority]=useState(''),[busy,setBusy]=useState(false);
- useEffect(()=>{setStatus(initialStatus==='Done'?'Completed':initialStatus==='To Do'||initialStatus==='In Review'?'Pending':initialStatus||'All statuses');if(initialStatus==='Done'){setFrom('');setTo('')}},[initialStatus]);
- const filtered=useMemo(()=>{let out=tasks.filter(t=>{const q=query.trim().toLowerCase();if(q&&!`${t.title} ${t.description||''}`.toLowerCase().includes(q))return false;if(project!=='All projects'&&String(t.projectId)!==project)return false;if(status==='Active'&&['Done','Cancelled'].includes(t.status))return false;if(status==='Due today'&&(t.dueDate!==today()||['Done','Cancelled'].includes(t.status)))return false;if(status==='Overdue'&&(!t.dueDate||t.dueDate>=today()||['Done','Cancelled'].includes(t.status)))return false;if(status==='Completed'&&t.status!=='Done')return false;if(!['All statuses','Active','Due today','Overdue','Completed'].includes(status)&&(status==='Pending'?['To Do','In Review'].includes(t.status):t.status===status)===false)return false;if(priority!=='All priorities'&&t.priority!==priority)return false;if(milestone!=='All milestones'&&String(t.milestoneId||'')!==milestone)return false;if(from&&(!t.dueDate||t.dueDate<from))return false;if(to&&(!t.dueDate||t.dueDate>to))return false;if(due==='Due today'&&t.dueDate!==today())return false;if(due==='Overdue'&&(!t.dueDate||t.dueDate>=today()||['Done','Cancelled'].includes(t.status)))return false;if(due==='No date'&&t.dueDate)return false;return true});out.sort((a,b)=>sort==='priority'?priorities.indexOf(a.priority)-priorities.indexOf(b.priority):sort==='title'?a.title.localeCompare(b.title):sort==='created'?(b.createdAt||'').localeCompare(a.createdAt||''):(a.dueDate||'9999').localeCompare(b.dueDate||'9999'));return out},[tasks,query,project,status,priority,milestone,from,to,due,sort]);
- const leaves=tasks.filter(t=>leaf(t,tasks)),now=today();const metricScope=leaves.filter(t=>(project==='All projects'||String(t.projectId)===project)&&(!from||!t.dueDate||t.dueDate>=from)&&(!to||!t.dueDate||t.dueDate<=to));const metrics={active:metricScope.filter(t=>!['Done','Cancelled'].includes(t.status)).length,due:metricScope.filter(t=>t.dueDate===now&&!['Done','Cancelled'].includes(t.status)).length,overdue:metricScope.filter(t=>t.dueDate&&t.dueDate<now&&!['Done','Cancelled'].includes(t.status)).length,done:leaves.filter(t=>(project==='All projects'||String(t.projectId)===project)&&t.status==='Done').length};
- useEffect(()=>{let live=true;api.get('/tasks/analytics',{params:{projectId:project==='All projects'?undefined:Number(project),from:from||undefined,to:to||undefined}}).then(r=>{if(live)setAnalytics(r.data)}).catch(()=>{if(live)setAnalytics(null)});return()=>{live=false}},[project,from,to,tasks.length]);
- useEffect(()=>{setPage(0);setSelected([])},[query,project,status,priority,milestone,from,to,due,sort,view]);
- const pageSize=10,pages=Math.max(1,Math.ceil(filtered.length/pageSize)),visible=filtered.slice(page*pageSize,(page+1)*pageSize);
- const open=async(t:Task)=>{setDetailBusy(true);setDetail({task:t});try{const r=await api.get(`/tasks/${t.id}/details`);setDetail(r.data)}catch{setDetail({task:t,subtasks:[],timeEntries:[],activity:[]});notify('Could not load complete task details.')}finally{setDetailBusy(false)}};
- const startTimer=async(t:Task)=>{try{await api.post('/time/timer/start',{projectId:t.projectId,taskId:t.id,notes:`Focused task: ${t.title}`});await reload();notify(`Timer started for ${t.title}`)}catch(e:any){notify(e?.response?.data?.message||'Timer could not start. Check the active timer.')}};
- const bulk=async()=>{if(!selected.length)return;setBusy(true);try{const payload:any={ids:selected};if(bulkStatus)payload.status=bulkStatus;if(bulkPriority)payload.priority=bulkPriority;await api.patch('/tasks/bulk',payload);await reload();setSelected([]);setBulkStatus('');setBulkPriority('');notify(`${selected.length} task${selected.length===1?'':'s'} updated`)}catch(e:any){notify(e?.response?.data?.message||'Bulk update failed. No tasks were changed.')}finally{setBusy(false)}};
- const clear=()=>{const d=new Date();d.setDate(d.getDate()-6);setQuery('');setProject('All projects');setStatus('All statuses');setPriority('All priorities');setDue('Any due date');setMilestone('All milestones');setFrom(dayKey(d));setTo(today());setSort('due')};
- const focus=leaves.filter(t=>!['Done','Blocked','Cancelled'].includes(t.status)&&t.dependencyReady!==false).filter(t=>!t.parentTaskId||tasks.find(x=>x.id===t.parentTaskId)?.status==='Done').sort((a,b)=>{const score=(t:Task)=>t.dueDate&&t.dueDate<now?0:t.dueDate===now?1:['Critical','Urgent'].includes(t.priority)?2:t.priority==='High'?3:milestones.some(m=>m.id===t.milestoneId&&m.status!=='Completed'&&m.targetDate&&m.targetDate>=now&&m.targetDate<=dayKey(new Date(Date.now()+7*86400000)))?3.5:t.dueDate?4:5;return score(a)-score(b)||(a.dueDate||'9999').localeCompare(b.dueDate||'9999')}).slice(0,1)[0];
- const statusRows=(analytics?.status||[]).reduce((rows:{name:string;count:number;color:string}[],r:any)=>{const name=r.status==='Done'?'Completed':r.status==='To Do'||r.status==='In Review'?'Pending':r.status,color=r.status==='Done'?'#46d69a':r.status==='Blocked'?'#f17668':r.status==='In Progress'?'#80d93c':'#547368',existing=rows.find(x=>x.name===name);if(existing)existing.count+=Number(r.count);else rows.push({name,count:Number(r.count),color});return rows},[]);
- const activeCount=statusRows.reduce((n:any,r:any)=>n+r.count,0),priorityRows=analytics?.priority||[],week=analytics?.weeklyCompleted||[];const taskRow=(t:Task)=><article className="mytask-row" key={t.id}><input aria-label={`Select ${t.title}`} type="checkbox" checked={selected.includes(t.id)} onChange={e=>setSelected(s=>e.target.checked?[...s,t.id]:s.filter(id=>id!==t.id))}/><button className={`mytask-complete ${t.status==='Done'?'is-done':''}`} onClick={()=>changeStatus(t,t.status==='Done'?'To Do':'Done')} aria-label={t.status==='Done'?`Reopen ${t.title}`:`Complete ${t.title}`}>{t.status==='Done'?<CheckCircle2 size={18}/>:<Circle size={18}/>}</button><button className="mytask-title" onClick={()=>void open(t)}><b>{t.title}</b><small>{t.description||'No description'}{t.milestoneName?' · '+t.milestoneName:''}{t.estimatedMinutes?' · '+t.estimatedMinutes+'m estimate':''}{t.parentTaskId?' · Subtask':''}</small></button><span className="mytask-project">{t.projectName}</span><span className={`mytask-priority p-${t.priority.toLowerCase()}`}>{t.priority}</span><span className={`mytask-status s-${t.status.toLowerCase().replaceAll(' ','-')}`}>{t.status==='Done'?'Completed':t.status==='To Do'?'Pending':t.status}</span><span className="mytask-due">{prettyDate(t.dueDate)}</span><span className="mytask-actual"><Clock3 size={13}/>{duration(t.actualSeconds)}</span><button className="icon-button" aria-label={`Edit ${t.title}`} onClick={()=>onEdit(t)}>•••</button></article>;
- const monthGrid=()=>{const y=month.getFullYear(),m=month.getMonth(),offset=(new Date(y,m,1).getDay()+6)%7,count=new Date(y,m+1,0).getDate();return <div className="mytask-calendar"><div className="mytask-calendar-head"><button className="icon-button" onClick={()=>setMonth(new Date(y,m-1,1))}><ChevronLeft size={17}/></button><b>{month.toLocaleDateString(undefined,{month:'long',year:'numeric'})}</b><button className="icon-button" onClick={()=>setMonth(new Date(y,m+1,1))}><ChevronRight size={17}/></button></div><div className="mytask-calendar-grid">{['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(x=><small key={x}>{x}</small>)}{Array.from({length:Math.ceil((offset+count)/7)*7},(_,i)=>{const d=i-offset+1,key=d>0&&d<=count?`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`:'';return <div className="mytask-calendar-day" key={i}><span>{d>0&&d<=count?d:''}</span>{filtered.filter(t=>t.dueDate===key).slice(0,3).map(t=><button key={t.id} onClick={()=>void open(t)} title={t.title}>{t.title}</button>)}</div>})}</div></div>};
- return <div className="mytasks-page"><Header title="My Tasks" description="Stay focused. Prioritize your work. Make progress every day." actions={<><button className="button secondary" onClick={()=>void reload()} title="Refresh tasks"><ArrowDownUp size={15}/> Refresh</button><button className="button primary" onClick={onCreate}><Plus size={16}/> New task</button></>}/>
- <div className="mytasks-controls"><label className="mytasks-search"><Search size={16}/><input aria-label="Search tasks" placeholder="Search tasks or descriptions…" value={query} onChange={e=>setQuery(e.target.value)}/></label><select aria-label="Filter by project" value={project} onChange={e=>setProject(e.target.value)}><option>All projects</option>{projects.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select><label className="date-filter">From <input type="date" value={from} onChange={e=>setFrom(e.target.value)}/></label><label className="date-filter">To <input type="date" value={to} onChange={e=>setTo(e.target.value)}/></label></div>
- <div className="mytasks-metrics">{[['Total active tasks',metrics.active,'Across projects'],['Due today',metrics.due,'Needs attention'],['Overdue',metrics.overdue,'Past due · unfinished'],['Completed · all time',metrics.done,'Leaf tasks marked done']].map(([label,value,hint],i)=><button className={`mytasks-metric metric-${i}`} key={label as string} onClick={()=>{setStatus(i===0?'Active':i===1?'Due today':i===2?'Overdue':'Completed');setDue('Any due date');setPriority('All priorities');if(i===3){setFrom('');setTo('')}}}><span>{label}</span><b>{value}</b><small>{hint}</small></button>)}</div>
- <div className="mytasks-analytics"><section className="panel mytasks-chart"><div className="section-head"><div><h2>Task completion</h2><p>Current status · filtered leaf tasks</p></div></div>{activeCount?<div className="mytasks-donut-content"><Donut rows={statusRows} total={activeCount} onPick={s=>setStatus(s)}/><div className="mytasks-legend">{statusRows.map((r:any)=><button key={r.name} onClick={()=>setStatus(r.name)}><i style={{background:r.color}}/><span>{r.name}</span><b>{r.count}</b></button>)}</div></div>:<div className="mytasks-chart-empty">No task analytics for these filters yet.</div>}</section><section className="panel mytasks-chart"><div className="section-head"><div><h2>Priority breakdown</h2><p>Open tasks · filtered by project and date</p></div></div>{priorityRows.some((r:any)=>r.count>0)?<div className="mytasks-bars">{priorityRows.map((r:any)=><button key={r.priority} onClick={()=>{setPriority(r.priority);setStatus('All statuses')}}><span>{r.priority}</span><i><em style={{width:`${Math.max(4,Number(r.count)/Math.max(...priorityRows.map((x:any)=>Number(x.count)))*100)}%`}}/></i><b>{r.count}</b></button>)}</div>:<div className="mytasks-chart-empty">No open tasks match these filters.</div>}</section><section className="panel mytasks-chart mytasks-weekly"><div className="section-head"><div><h2>Weekly completion</h2><p>Tasks completed per day · selected range</p></div></div>{week.some((r:any)=>r.count>0)?<div className="mytasks-week-bars">{week.map((r:any)=><div key={r.date} title={`${r.count} completed`}><b>{r.count||''}</b><i><em style={{height:`${Math.max(r.count?8:0,Number(r.count)/Math.max(...week.map((x:any)=>Number(x.count)),1)*100)}%`}}/></i><small>{new Date(`${String(r.date).slice(0,10)}T00:00:00`).toLocaleDateString(undefined,{weekday:'short'})}</small></div>)}</div>:<div className="mytasks-chart-empty">No completed tasks in this date range.</div>}</section></div>
- <section className="panel mytasks-focus"><div className="section-head"><div><span className="eyebrow"><Sparkles size={13}/> FOCUS TODAY</span><h2>What should I do next?</h2><p>Based on deadline, priority, and whether the task is ready to start.</p></div></div>{focus?<div className="mytasks-focus-card"><div><span className={`mytask-priority p-${focus.priority.toLowerCase()}`}>{focus.priority} priority</span><h3>{focus.title}</h3><p>{focus.projectName} · Due {prettyDate(focus.dueDate)} · {focus.estimatedMinutes?`${focus.estimatedMinutes} min estimate`:'No estimate'}</p><small>{focus.dueDate&&focus.dueDate<now?'Past due, so this is the first open item to bring back on track.':focus.dueDate===now?'Due today and ready to start.':`${focus.priority} priority and ready to start.`}{focus.milestoneName?` Milestone: ${focus.milestoneName}.`:''}</small></div><div><button className="button secondary" onClick={()=>void open(focus)}>Open task</button><button className="button secondary" disabled={timer.status!=='Stopped'} onClick={()=>void startTimer(focus)}><Play size={14}/> Start timer</button><button className="button primary" onClick={()=>changeStatus(focus,'Done')}><Check size={14}/> Complete</button></div></div>:<div className="mytasks-focus-empty"><CheckCircle2 size={18}/> All available tasks are done, blocked, cancelled, or waiting on their parent task.</div>}</section>
- <section className="panel mytasks-all"><div className="mytasks-list-head"><div><span className="eyebrow"><SlidersHorizontal size={13}/> YOUR WORK</span><h2>All tasks <small>{filtered.length}</small></h2></div><div className="mytasks-view-toggle">{(['List','Board','Calendar'] as const).map((v,i)=><button className={view===v?'active':''} key={v} onClick={()=>setView(v)}>{i===0?<List size={14}/>:i===1?<SquareKanban size={14}/>:<CalendarDays size={14}/>}<span>{v}</span></button>)}</div></div>
- <div className="mytasks-filter-row"><select aria-label="Status" value={status} onChange={e=>setStatus(e.target.value)}><option>All statuses</option><option>Active</option><option>Pending</option><option>Due today</option><option>Overdue</option><option>In Progress</option><option>Blocked</option><option>Completed</option><option>Cancelled</option></select><select aria-label="Priority" value={priority} onChange={e=>setPriority(e.target.value)}><option>All priorities</option>{priorities.map(p=><option key={p}>{p}</option>)}</select><select aria-label="Due date" value={due} onChange={e=>setDue(e.target.value)}>{['Any due date','Due today','Overdue','No date'].map(x=><option key={x}>{x}</option>)}</select><select aria-label="Milestone" value={milestone} onChange={e=>setMilestone(e.target.value)}><option>All milestones</option>{milestones.filter(m=>project==='All projects'||String(m.projectId)===project).map(m=><option key={m.id} value={m.id}>{m.name}</option>)}</select><select aria-label="Sort tasks" value={sort} onChange={e=>setSort(e.target.value)}><option value="due">Sort: due date</option><option value="priority">Sort: priority</option><option value="created">Sort: newest</option><option value="title">Sort: title</option></select><button className="text-button" onClick={clear}>Clear filters</button></div>
- {selected.length>0&&<div className="mytasks-bulk"><b>{selected.length} selected</b><select aria-label="Bulk change status" value={bulkStatus} onChange={e=>setBulkStatus(e.target.value)}><option value="">Set status…</option>{states.map(s=><option key={s}>{s}</option>)}</select><select aria-label="Bulk change priority" value={bulkPriority} onChange={e=>setBulkPriority(e.target.value)}><option value="">Set priority…</option>{priorities.map(s=><option key={s}>{s}</option>)}</select><button className="button primary" disabled={busy||(!bulkStatus&&!bulkPriority)} onClick={()=>void bulk()}>{busy?<LoaderCircle className="spin" size={14}/>:<Check size={14}/>}Apply</button><button className="text-button" onClick={()=>setSelected([])}>Clear selection</button></div>}
- {view==='List'&&<>{visible.length?<><div className="mytasks-table-label"><span>Task</span><span>Project</span><span>Priority</span><span>Status</span><span>Due date</span><span>Actual time</span></div><div className="mytasks-list">{visible.map(taskRow)}</div><div className="mytasks-pagination"><span>Showing {page*pageSize+1}–{Math.min((page+1)*pageSize,filtered.length)} of {filtered.length}</span><div><button className="icon-button" disabled={!page} onClick={()=>setPage(page-1)} aria-label="Previous page"><ChevronLeft size={16}/></button><span>{page+1} / {pages}</span><button className="icon-button" disabled={page+1>=pages} onClick={()=>setPage(page+1)} aria-label="Next page"><ChevronRight size={16}/></button></div></div></>:<div className="mytasks-empty"><List size={21}/><b>{tasks.length?'No tasks match these filters':'Your task list is ready'}</b><span>{tasks.length?'Try adjusting your search or filters.':'Create a task to start building momentum across your projects.'}</span><button className="button primary" onClick={tasks.length?clear:onCreate}>{tasks.length?'Clear filters':'Create a task'}</button></div>}</>}
- {view==='Board'&&<div className="mytasks-board">{(['Pending','In Progress','Blocked','Completed'] as const).map(col=>{const records=filtered.filter(t=>col==='Pending'?['To Do','In Review'].includes(t.status):col==='Completed'?t.status==='Done':t.status===col);return <section key={col}><header><b>{col}</b><span>{records.length}</span></header>{records.map(t=><article key={t.id}><button onClick={()=>void open(t)}><b>{t.title}</b><small>{t.projectName} · {prettyDate(t.dueDate)}</small></button><div><span className={`mytask-priority p-${t.priority.toLowerCase()}`}>{t.priority}</span><select aria-label={`Change status for ${t.title}`} value={t.status} onChange={e=>changeStatus(t,e.target.value as Status)}>{states.map(s=><option key={s}>{s}</option>)}</select></div></article>)}</section>})}</div>}
- {view==='Calendar'&&monthGrid()}
- </section>
- {detail&&<div className="mytasks-drawer-backdrop" onMouseDown={e=>e.currentTarget===e.target&&setDetail(null)}><aside className="mytasks-drawer" role="dialog" aria-modal="true" aria-label="Task details"><header><span className="eyebrow">TASK DETAILS</span><button className="icon-button" onClick={()=>setDetail(null)} aria-label="Close task details"><X size={18}/></button></header>{detailBusy?<LoaderCircle className="spin"/>:<><h2>{detail.title||detail.task?.title}</h2><p className="mytasks-detail-description">{detail.description||detail.task?.description||'No description provided.'}</p><div className="mytasks-detail-fields"><span>Project<b>{detail.projectName||detail.task?.projectName}</b></span><span>Milestone<b>{detail.milestoneName||'None assigned'}</b></span><span>Status<b>{detail.status||detail.task?.status}</b></span><span>Priority<b>{detail.priority||detail.task?.priority}</b></span><span>Start date<b>{prettyDate(detail.startDate||detail.task?.startDate)}</b></span><span>Due date<b>{prettyDate(detail.dueDate||detail.task?.dueDate)}</b></span><span>Estimate<b>{detail.estimatedMinutes?`${detail.estimatedMinutes} min`:'Not set'}</b></span><span>Actual time<b>{duration(detail.actualSeconds||detail.task?.actualSeconds)}</b></span><span>Parent task<b>{detail.parentTaskId?'Subtask':'Top-level task'}</b></span></div><div className="mytasks-detail-actions"><button className="button secondary" onClick={()=>{const t=tasks.find(x=>x.id===(detail.id||detail.task?.id));if(t){setDetail(null);onEdit(t)}}}>Edit task</button><button className="button secondary" onClick={()=>{const t=tasks.find(x=>x.id===(detail.id||detail.task?.id));if(t){setDetail(null);onDelete(t)}}}>Delete</button><button className="button secondary" disabled={timer.status!=='Stopped'} onClick={()=>{const t=tasks.find(x=>x.id===(detail.id||detail.task?.id));if(t)void startTimer(t)}}><Timer size={14}/> Start timer</button><select aria-label="Change task status" value={detail.status||detail.task?.status} onChange={e=>{const t=tasks.find(x=>x.id===(detail.id||detail.task?.id));if(t)changeStatus(t,e.target.value as Status)}}>{states.map(s=><option key={s}>{s}</option>)}</select></div><section><h3>Dependencies <small>{detail.dependencies?.length||0}</small></h3>{tasks.filter(t=>t.projectId===(detail.projectId||detail.task?.projectId)&&t.id!==(detail.id||detail.task?.id)&&!t.parentTaskId).map(t=><label className="mytasks-dep-option" key={t.id}><input type="checkbox" checked={(detail.dependencies||[]).some((d:any)=>d.id===t.id)} onChange={async e=>{const ids=(detail.dependencies||[]).map((d:any)=>d.id);const next=e.target.checked?[...ids,t.id]:ids.filter((id:number)=>id!==t.id);try{const result=await api.put(`/tasks/${detail.id||detail.task?.id}/dependencies`,{ids:next});setDetail({...detail,dependencies:result.data.dependencies});await reload();notify("Task dependencies saved")}catch(err:any){notify(err?.response?.data?.message||"Dependencies could not be saved")}}}/><span>{t.title}<small>{t.status}</small></span></label>)}{!tasks.some(t=>t.projectId===(detail.projectId||detail.task?.projectId)&&t.id!==(detail.id||detail.task?.id)&&!t.parentTaskId)&&<p className="mytasks-muted">No other project tasks are available as dependencies.</p>}<p className="mytasks-muted">A task is ready to start after every dependency is completed.</p></section><section><h3>Subtasks <small>{detail.subtasks?.length||0}</small></h3>{detail.subtasks?.length?detail.subtasks.map((t:Task)=><button className="mytasks-subtask" key={t.id} onClick={()=>void open(t)}>{t.status==='Done'?<CheckCircle2 size={15}/>:<Circle size={15}/>} {t.title}<span>{t.status}</span></button>):<p className="mytasks-muted">No subtasks yet. Edit this task to create one with a parent task.</p>}</section><section><h3>Notes</h3><p className="mytasks-notes">{detail.notes||detail.task?.notes||'No notes added.'}</p></section><section><h3>Time entries <small>{detail.timeEntries?.length||0}</small></h3>{detail.timeEntries?.length?detail.timeEntries.map((e:any)=><div className="mytasks-history" key={e.id}><Clock3 size={14}/><span>{new Date(e.startedAt).toLocaleString()}<small>{e.notes||'Tracked session'}</small></span><b>{duration(Number(e.durationSeconds))}</b></div>):<p className="mytasks-muted">No recorded time entries for this task.</p>}</section><section><h3><Activity size={15}/> Activity <small>{detail.activity?.length||0}</small></h3>{detail.activity?.length?detail.activity.map((a:any)=><div className="mytasks-history" key={a.id}><Activity size={14}/><span>{a.action}<small>{a.details}</small></span><time>{new Date(a.createdAt).toLocaleString()}</time></div>):<p className="mytasks-muted">No task activity has been recorded yet.</p>}</section></>}</aside></div>}
- </div>
+interface TasksPageProps {
+  tasks: Task[];
+  projects: Project[];
+  milestones: Milestone[];
+  initialStatus: string;
+  onCreate: () => void;
+  onEdit: (t: Task) => void;
+  onDelete: (t: Task) => void;
+  changeStatus: (t: Task, s: TaskStatus) => void;
+  timer: { status: string; taskId?: number; projectId?: number };
+  reload: () => Promise<void>;
+  notify: (s: string) => void;
+}
+
+export function TasksPage({
+  tasks,
+  projects,
+  milestones: _milestones,
+  initialStatus,
+  onCreate,
+  onEdit,
+  onDelete,
+  changeStatus,
+  timer: _timer,
+  reload: _reload,
+  notify: _notify,
+}: TasksPageProps) {
+  const [query, setQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>(initialStatus || 'All');
+  const [projectFilter, setProjectFilter] = useState<string>('All');
+  const [priorityFilter, setPriorityFilter] = useState<string>('All');
+  const [view, setView] = useState<'List' | 'Board'>('List');
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+
+  const todayStr = new Date().toISOString().slice(0, 10);
+
+  const stats = useMemo(() => {
+    const nonCancelled = tasks.filter((t) => t.status !== 'Cancelled');
+    const active = nonCancelled.filter((t) => t.status !== 'Done').length;
+    const dueToday = nonCancelled.filter((t) => t.dueDate === todayStr && t.status !== 'Done').length;
+    const overdue = nonCancelled.filter((t) => t.dueDate && t.dueDate < todayStr && t.status !== 'Done').length;
+    const completed = nonCancelled.filter((t) => t.status === 'Done').length;
+    return { active, dueToday, overdue, completed };
+  }, [tasks, todayStr]);
+
+  const filteredTasks = useMemo(() => {
+    return tasks.filter((t) => {
+      const q = query.trim().toLowerCase();
+      const matchesQuery = !q || `${t.title} ${t.description || ''} ${t.projectName || ''}`.toLowerCase().includes(q);
+      const matchesStatus =
+        statusFilter === 'All'
+          ? true
+          : statusFilter === 'Pending'
+            ? ['To Do', 'In Review'].includes(t.status)
+            : statusFilter === 'Due Today'
+              ? t.dueDate === todayStr && t.status !== 'Done'
+              : statusFilter === 'Overdue'
+                ? t.dueDate && t.dueDate < todayStr && t.status !== 'Done'
+                : t.status === statusFilter;
+      const matchesProj = projectFilter === 'All' || String(t.projectId) === projectFilter;
+      const matchesPriority = priorityFilter === 'All' || t.priority === priorityFilter;
+
+      return matchesQuery && matchesStatus && matchesProj && matchesPriority;
+    });
+  }, [tasks, query, statusFilter, projectFilter, priorityFilter, todayStr]);
+
+  const getDueCountdown = (dueDate?: string, status?: string) => {
+    if (status === 'Done') return { text: 'Done', overdue: false };
+    if (!dueDate) return { text: 'No due date', overdue: false };
+
+    const target = new Date(`${dueDate}T00:00:00`);
+    const today = new Date(`${todayStr}T00:00:00`);
+    const diff = Math.round((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (diff === 0) return { text: 'Due Today', overdue: false };
+    if (diff === 1) return { text: 'Due Tomorrow', overdue: false };
+    if (diff > 1) return { text: `In ${diff} days`, overdue: false };
+    return { text: `${Math.abs(diff)}d Overdue`, overdue: true };
+  };
+
+  const getPriorityColor = (p: Priority) => {
+    switch (p) {
+      case 'Critical':
+      case 'Urgent':
+        return '#f08656';
+      case 'High':
+        return '#e3b340';
+      case 'Medium':
+        return '#8cff45';
+      case 'Low':
+        return '#5dc886';
+    }
+  };
+
+  return (
+    <div className="mytasks-page">
+      {/* Page Heading */}
+      <div className="page-heading">
+        <div>
+          <div className="eyebrow">TASK MANAGEMENT & FOCUS LIST</div>
+          <h1>My Tasks</h1>
+          <p>Prioritize your day, track granular deliverables, and mark progress across all projects.</p>
+        </div>
+        <div className="heading-actions">
+          <button className="button primary" onClick={onCreate}>
+            <Plus size={15} /> Add Task
+          </button>
+        </div>
+      </div>
+
+      {/* 4 KPI Metrics */}
+      <div className="mytasks-metrics-grid">
+        <div className="mytasks-metric-card" onClick={() => setStatusFilter('All')}>
+          <div className="mytasks-metric-top">
+            <span>Total Active Tasks</span>
+            <Sparkles size={16} color="#72df00" />
+          </div>
+          <div className="mytasks-metric-value">{stats.active}</div>
+          <div className="mytasks-metric-hint">
+            <span className="dot" style={{ background: '#72df00' }} /> Open across projects
+          </div>
+        </div>
+
+        <div className="mytasks-metric-card" onClick={() => setStatusFilter('Due Today')}>
+          <div className="mytasks-metric-top">
+            <span>Due Today</span>
+            <Clock size={16} color="#8cff45" />
+          </div>
+          <div className="mytasks-metric-value" style={{ color: '#8cff45' }}>
+            {stats.dueToday}
+          </div>
+          <div className="mytasks-metric-hint">
+            <span className="dot" style={{ background: '#8cff45' }} /> High priority today
+          </div>
+        </div>
+
+        <div className="mytasks-metric-card" onClick={() => setStatusFilter('Overdue')}>
+          <div className="mytasks-metric-top">
+            <span>Overdue Tasks</span>
+            <AlertCircle size={16} color={stats.overdue > 0 ? '#ff8585' : '#72df00'} />
+          </div>
+          <div className="mytasks-metric-value" style={{ color: stats.overdue > 0 ? '#ff9185' : '#8cff45' }}>
+            {stats.overdue}
+          </div>
+          <div className="mytasks-metric-hint">
+            <span className="dot" style={{ background: stats.overdue > 0 ? '#ff8585' : '#72df00' }} /> Needs date adjustment
+          </div>
+        </div>
+
+        <div className="mytasks-metric-card" onClick={() => setStatusFilter('Done')}>
+          <div className="mytasks-metric-top">
+            <span>Delivered & Done</span>
+            <CheckCircle2 size={16} color="#46d69a" />
+          </div>
+          <div className="mytasks-metric-value" style={{ color: '#46d69a' }}>
+            {stats.completed}
+          </div>
+          <div className="mytasks-metric-hint">
+            <span className="dot" style={{ background: '#46d69a' }} /> Marked completed
+          </div>
+        </div>
+      </div>
+
+      {/* Filter and View Switcher Toolbar */}
+      <div className="mytasks-toolbar">
+        <div className="mytasks-filter-pills">
+          {['All', 'In Progress', 'To Do', 'In Review', 'Blocked', 'Done'].map((s) => (
+            <button
+              key={s}
+              className={`task-filter-chip ${statusFilter === s ? 'active' : ''}`}
+              onClick={() => setStatusFilter(s)}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+
+        <div className="mytasks-toolbar-right">
+          <div className="time-log-search" style={{ width: 220 }}>
+            <Search size={15} />
+            <input
+              placeholder="Search tasks..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
+
+          <select
+            style={{
+              height: 38,
+              background: '#09170f',
+              border: '1px solid #1c3c26',
+              borderRadius: 8,
+              color: '#dceee0',
+              padding: '0 10px',
+              fontSize: 11,
+            }}
+            value={projectFilter}
+            onChange={(e) => setProjectFilter(e.target.value)}
+          >
+            <option value="All">All Projects</option>
+            {projects.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+
+          <select
+            style={{
+              height: 38,
+              background: '#09170f',
+              border: '1px solid #1c3c26',
+              borderRadius: 8,
+              color: '#dceee0',
+              padding: '0 10px',
+              fontSize: 11,
+            }}
+            value={priorityFilter}
+            onChange={(e) => setPriorityFilter(e.target.value)}
+          >
+            <option value="All">All Priorities</option>
+            {['Critical', 'Urgent', 'High', 'Medium', 'Low'].map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
+          </select>
+
+          <div className="projects-view-toggle">
+            <button className={view === 'List' ? 'active' : ''} onClick={() => setView('List')}>
+              <List size={14} /> List
+            </button>
+            <button className={view === 'Board' ? 'active' : ''} onClick={() => setView('Board')}>
+              <Grid2X2 size={14} /> Board
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Task List View */}
+      {view === 'List' && (
+        <div className="mytasks-list-container">
+          {filteredTasks.length === 0 ? (
+            <div className="empty" style={{ margin: '30px 0' }}>
+              <CheckCircle2 size={26} color="#72df00" />
+              <b>No tasks match current filters</b>
+              <p>Create a task to build momentum or clear your search filters.</p>
+              <button className="button primary" onClick={onCreate}>
+                <Plus size={15} /> Add Task
+              </button>
+            </div>
+          ) : (
+            filteredTasks.map((t) => {
+              const countdown = getDueCountdown(t.dueDate, t.status);
+              const isDone = t.status === 'Done';
+
+              return (
+                <div className="task-card-item" key={t.id}>
+                  <div className="task-card-left">
+                    <button
+                      className={`task-check-circle ${isDone ? 'is-done' : ''}`}
+                      onClick={() => changeStatus(t, isDone ? 'To Do' : 'Done')}
+                      title={isDone ? 'Reopen task' : 'Mark complete'}
+                    >
+                      {isDone ? <CheckCircle2 size={20} color="#72df00" /> : <Circle size={20} />}
+                    </button>
+
+                    <div className="task-info-block">
+                      <button
+                        className={`task-headline-title ${isDone ? 'is-done' : ''}`}
+                        onClick={() => setSelectedTask(t)}
+                      >
+                        {t.title}
+                      </button>
+
+                      <div className="task-sub-meta">
+                        <span>
+                          <FolderKanban size={13} color="#72df00" /> {t.projectName || 'Project'}
+                        </span>
+                        <span>•</span>
+                        {t.assignee && (
+                          <>
+                            <span>{t.assignee}</span>
+                            <span>•</span>
+                          </>
+                        )}
+                        <span style={{ color: getPriorityColor(t.priority), fontWeight: 700 }}>
+                          {t.priority} Priority
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="task-card-right">
+                    <span className={`task-due-badge ${countdown.overdue ? 'overdue' : ''}`}>
+                      <CalendarDays size={13} />
+                      {countdown.text}
+                    </span>
+
+                    <span className={`status-badge ${t.status.toLowerCase().replace(' ', '-')}`}>
+                      <i />
+                      {t.status}
+                    </span>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <button
+                        className="icon-button"
+                        style={{ width: 30, height: 30 }}
+                        title="Edit task"
+                        onClick={() => onEdit(t)}
+                      >
+                        <Edit2 size={14} />
+                      </button>
+                      <button
+                        className="icon-button"
+                        style={{ width: 30, height: 30, color: '#ff8a8a' }}
+                        title="Delete task"
+                        onClick={() => onDelete(t)}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
+
+      {/* Kanban Board View */}
+      {view === 'Board' && (
+        <div className="task-kanban-board">
+          {(['To Do', 'In Progress', 'In Review', 'Done'] as const).map((col) => {
+            const colTasks = filteredTasks.filter((t) => t.status === col);
+            return (
+              <div className="task-kanban-col" key={col}>
+                <div className="task-kanban-col-head">
+                  <b>{col}</b>
+                  <span className="priority-count">{colTasks.length}</span>
+                </div>
+
+                <div style={{ display: 'grid', gap: 10 }}>
+                  {colTasks.map((t) => (
+                    <div
+                      className="task-kanban-card"
+                      key={t.id}
+                      onClick={() => setSelectedTask(t)}
+                    >
+                      <b style={{ fontSize: 13, color: '#f0fff2' }}>{t.title}</b>
+                      <small style={{ color: '#8ea795', fontSize: 11 }}>{t.projectName}</small>
+
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
+                        <span className={`priority-badge ${t.priority.toLowerCase()}`}>{t.priority}</span>
+                        <select
+                          style={{
+                            height: 26,
+                            background: '#0a160e',
+                            border: '1px solid #1c3c26',
+                            borderRadius: 6,
+                            color: '#dceee0',
+                            fontSize: 10,
+                            padding: '0 4px',
+                          }}
+                          value={t.status}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => changeStatus(t, e.target.value as TaskStatus)}
+                        >
+                          {['To Do', 'In Progress', 'In Review', 'Blocked', 'Done'].map((st) => (
+                            <option key={st} value={st}>
+                              {st}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Slide-out Task Detail Drawer */}
+      {selectedTask && (
+        <div className="modal-overlay" onMouseDown={(e) => e.target === e.currentTarget && setSelectedTask(null)}>
+          <div className="modal" style={{ maxWidth: 520 }}>
+            <div className="modal-header">
+              <div>
+                <span className="eyebrow">{selectedTask.projectName?.toUpperCase() || 'TASK DETAILS'}</span>
+                <h2>{selectedTask.title}</h2>
+              </div>
+              <button className="icon-button" onClick={() => setSelectedTask(null)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <div style={{ display: 'grid', gap: 14 }}>
+              <p style={{ margin: 0, color: '#9bb5a3', fontSize: 13, lineHeight: 1.6 }}>
+                {selectedTask.description || 'No description provided for this task.'}
+              </p>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div className="time-stat-box">
+                  <span style={{ fontSize: 11, color: '#8da995' }}>Status</span>
+                  <b style={{ fontSize: 14, color: '#8cff45', display: 'block', marginTop: 4 }}>
+                    {selectedTask.status}
+                  </b>
+                </div>
+                <div className="time-stat-box">
+                  <span style={{ fontSize: 11, color: '#8da995' }}>Priority</span>
+                  <b style={{ fontSize: 14, color: '#f0fff2', display: 'block', marginTop: 4 }}>
+                    {selectedTask.priority}
+                  </b>
+                </div>
+                <div className="time-stat-box">
+                  <span style={{ fontSize: 11, color: '#8da995' }}>Due Date</span>
+                  <b style={{ fontSize: 14, color: '#f0fff2', display: 'block', marginTop: 4 }}>
+                    {selectedTask.dueDate
+                      ? new Date(`${selectedTask.dueDate}T00:00:00`).toLocaleDateString(undefined, {
+                          month: 'short',
+                          day: 'numeric',
+                        })
+                      : 'None'}
+                  </b>
+                </div>
+                <div className="time-stat-box">
+                  <span style={{ fontSize: 11, color: '#8da995' }}>Assignee</span>
+                  <b style={{ fontSize: 14, color: '#f0fff2', display: 'block', marginTop: 4 }}>
+                    {selectedTask.assignee || 'Unassigned'}
+                  </b>
+                </div>
+              </div>
+
+              <div className="form-actions" style={{ marginTop: 12 }}>
+                <button
+                  className="button secondary"
+                  onClick={() => {
+                    const t = selectedTask;
+                    setSelectedTask(null);
+                    onEdit(t);
+                  }}
+                >
+                  <Edit2 size={14} /> Edit Task
+                </button>
+                <button
+                  className="button primary"
+                  onClick={() => {
+                    changeStatus(selectedTask, selectedTask.status === 'Done' ? 'To Do' : 'Done');
+                    setSelectedTask(null);
+                  }}
+                >
+                  {selectedTask.status === 'Done' ? 'Reopen Task' : 'Mark Done'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
