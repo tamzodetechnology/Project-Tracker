@@ -31,9 +31,9 @@
       "startDate": "2026-10-15",
       "deadline": "2026-11-12",
       "currentStage": "Testing",
-      "progress": 88,
+      "progress": 90,
       "taskCount": 10,
-      "completedTasks": 8,
+      "completedTasks": 9,
       "milestoneCount": 4,
       "owner": "Sureha DJ",
       "notes": "Luxury Deep Green · Electric Lime UI, native MCP server, resilient local storage, and Neon PostgreSQL schema.",
@@ -55,7 +55,11 @@
       "estimatedMinutes": 240,
       "actualSeconds": 14400,
       "assignee": "Sureha DJ",
-      "tags": ["Database", "Drizzle", "MySQL"]
+      "tags": [
+        "Database",
+        "Drizzle",
+        "MySQL"
+      ]
     },
     {
       "id": 102,
@@ -70,7 +74,10 @@
       "estimatedMinutes": 300,
       "actualSeconds": 7200,
       "assignee": "Sureha DJ",
-      "tags": ["Attendance", "Security"]
+      "tags": [
+        "Attendance",
+        "Security"
+      ]
     },
     {
       "id": 103,
@@ -85,7 +92,10 @@
       "estimatedMinutes": 220,
       "actualSeconds": 3600,
       "assignee": "Sureha DJ",
-      "tags": ["Tenant", "UI/UX"]
+      "tags": [
+        "Tenant",
+        "UI/UX"
+      ]
     },
     {
       "id": 104,
@@ -100,7 +110,10 @@
       "estimatedMinutes": 180,
       "actualSeconds": 10800,
       "assignee": "Sureha DJ",
-      "tags": ["PMS", "Workflow"]
+      "tags": [
+        "PMS",
+        "Workflow"
+      ]
     },
     {
       "id": 105,
@@ -115,7 +128,10 @@
       "estimatedMinutes": 260,
       "actualSeconds": 0,
       "assignee": "Sureha DJ",
-      "tags": ["HRMS", "Employee"]
+      "tags": [
+        "HRMS",
+        "Employee"
+      ]
     },
     {
       "id": 201,
@@ -130,7 +146,11 @@
       "estimatedMinutes": 300,
       "actualSeconds": 18000,
       "assignee": "Sureha DJ",
-      "tags": ["UI/UX", "Design System", "Frontend"]
+      "tags": [
+        "UI/UX",
+        "Design System",
+        "Frontend"
+      ]
     },
     {
       "id": 202,
@@ -145,7 +165,11 @@
       "estimatedMinutes": 240,
       "actualSeconds": 14400,
       "assignee": "Sureha DJ",
-      "tags": ["Backend", "Spring Boot", "PostgreSQL"]
+      "tags": [
+        "Backend",
+        "Spring Boot",
+        "PostgreSQL"
+      ]
     },
     {
       "id": 203,
@@ -160,7 +184,11 @@
       "estimatedMinutes": 180,
       "actualSeconds": 10800,
       "assignee": "Sureha DJ",
-      "tags": ["Database", "Flyway", "Migrations"]
+      "tags": [
+        "Database",
+        "Flyway",
+        "Migrations"
+      ]
     },
     {
       "id": 204,
@@ -175,7 +203,11 @@
       "estimatedMinutes": 240,
       "actualSeconds": 14400,
       "assignee": "Sureha DJ",
-      "tags": ["Tasks", "Kanban", "Telemetry"]
+      "tags": [
+        "Tasks",
+        "Kanban",
+        "Telemetry"
+      ]
     },
     {
       "id": 205,
@@ -190,7 +222,11 @@
       "estimatedMinutes": 200,
       "actualSeconds": 12000,
       "assignee": "Sureha DJ",
-      "tags": ["Calendar", "Deadlines", "UI"]
+      "tags": [
+        "Calendar",
+        "Deadlines",
+        "UI"
+      ]
     },
     {
       "id": 206,
@@ -205,7 +241,11 @@
       "estimatedMinutes": 150,
       "actualSeconds": 9000,
       "assignee": "Sureha DJ",
-      "tags": ["Offline", "Storage", "Backups"]
+      "tags": [
+        "Offline",
+        "Storage",
+        "Backups"
+      ]
     },
     {
       "id": 207,
@@ -220,7 +260,11 @@
       "estimatedMinutes": 180,
       "actualSeconds": 10800,
       "assignee": "Sureha DJ",
-      "tags": ["MCP", "AI", "Automation"]
+      "tags": [
+        "MCP",
+        "AI",
+        "Automation"
+      ]
     },
     {
       "id": 208,
@@ -235,7 +279,11 @@
       "estimatedMinutes": 120,
       "actualSeconds": 7200,
       "assignee": "Sureha DJ",
-      "tags": ["Refactoring", "Cleanup", "Bezent"]
+      "tags": [
+        "Refactoring",
+        "Cleanup",
+        "Bezent"
+      ]
     },
     {
       "id": 209,
@@ -250,7 +298,11 @@
       "estimatedMinutes": 240,
       "actualSeconds": 3600,
       "assignee": "Sureha DJ",
-      "tags": ["Git", "Automation", "Telemetry"]
+      "tags": [
+        "Git",
+        "Automation",
+        "Telemetry"
+      ]
     },
     {
       "id": 210,
@@ -258,14 +310,19 @@
       "description": "Deploy Spring Boot service to cloud hosting and establish live PostgreSQL sync bridge.",
       "projectId": 2,
       "projectName": "Project Tracker SaaS",
-      "status": "To Do",
+      "status": "Done",
       "priority": "Medium",
       "startDate": "2026-11-04",
       "dueDate": "2026-11-12",
       "estimatedMinutes": 180,
-      "actualSeconds": 0,
+      "actualSeconds": 9000,
       "assignee": "Sureha DJ",
-      "tags": ["Deployment", "Cloud", "Neon"]
+      "tags": [
+        "Deployment",
+        "Cloud",
+        "Neon"
+      ],
+      "notes": "Connected live Render deployment, synced Neon database with all real projects, and verified cloud endpoints."
     }
   ],
   "milestones": [
@@ -326,6 +383,22 @@
   ],
   "activities": [
     {
+      "id": 1793277631888,
+      "action": "Updated task to Done",
+      "entityType": "Task",
+      "entityName": "Live Neon Cloud PostgreSQL Production Deployment",
+      "details": "To Do ➔ Done (Connected live Render deployment, synced Neon database with all real projects, and verified cloud endpoints.)",
+      "createdAt": "2026-10-29T12:40:31.888Z"
+    },
+    {
+      "id": 1793277626012,
+      "action": "Logged 150m work",
+      "entityType": "Time Entry",
+      "entityName": "Project Tracker SaaS",
+      "details": "Task: Live Neon Cloud PostgreSQL Production Deployment · Connected Render cloud instance (https://project-tracker-7z3d.onrender.com), resolved calendar 7-column CSS conflict, removed dummy settings options, and synced 15 tasks to Neon PostgreSQL.",
+      "createdAt": "2026-10-29T12:40:26.010Z"
+    },
+    {
       "id": 1793276800001,
       "action": "Completed task",
       "entityType": "Task",
@@ -359,6 +432,17 @@
     }
   ],
   "timeEntries": [
+    {
+      "id": 1793277626012,
+      "projectId": 2,
+      "projectName": "Project Tracker SaaS",
+      "taskId": 210,
+      "taskTitle": "Live Neon Cloud PostgreSQL Production Deployment",
+      "startedAt": "2026-10-29T10:10:26.010Z",
+      "endedAt": "2026-10-29T12:40:26.010Z",
+      "durationSeconds": 9000,
+      "notes": "Connected Render cloud instance (https://project-tracker-7z3d.onrender.com), resolved calendar 7-column CSS conflict, removed dummy settings options, and synced 15 tasks to Neon PostgreSQL."
+    },
     {
       "id": 101,
       "projectId": 1,
