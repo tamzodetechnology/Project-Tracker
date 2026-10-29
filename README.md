@@ -45,7 +45,7 @@ This repository is configured as a single Render Docker web service: the Spring 
 **Access control is not implemented yet.** The API is currently unauthenticated, so anyone who finds the public Render URL can read and change tracker records. Treat the first deployment as a private preview and do not enter confidential company or client data until owner sign-in and endpoint protection are added.
 
 1. Create a **new, empty** Neon project/database. In Neon’s Connect dialog, choose the Java/JDBC connection details and copy the JDBC URL. Keep the Neon password secret. Neon requires an encrypted connection; keep `sslmode=require` in the URL. Neon can also provide pooled endpoints (with `-pooler` in the hostname); this app uses HikariCP with a small pool, so start with the direct endpoint unless your Neon connection limits call for the pooler. See [Neon connection security](https://neon.com/blog/oops-proof-your-vibe-code-with-neon-because-mistakes-happen) and [Neon pooling](https://neon.com/blog/postgres-support-case-recap).
-2. Push this repository to GitHub or another Git provider and connect it to Render. There is no Git remote configured in this workspace yet.
+2. Push this repository to GitHub or another Git provider and connect it to Render. Keep the repository private until authentication and access controls are added; the seeded project descriptions are personal workspace data.
 3. In Render, choose **New → Blueprint** and select this repository. Render reads [`render.yaml`](./render.yaml), builds the Dockerfile, and asks for `DATABASE_URL`, `DATABASE_USERNAME`, and `DATABASE_PASSWORD`. Use the JDBC URL from Neon for `DATABASE_URL`, and enter its matching role and password in the other fields. Do not put these values in `render.yaml` or commit them.
 4. Deploy. Flyway creates the schema and initial project/task records when the Spring service starts. Do not point the first deployment at a database that already contains tables named `projects`, `tasks`, `milestones`, `activity`, or `daily_updates`.
 5. Open the Render service URL. Check `/api/health` for `{"status":"ok"}` and `/api/projects` for the seeded projects. The Render health check is configured to `/api/health`.
@@ -62,18 +62,31 @@ mvn test
 
 ## Features
 
-- Dashboard counts and project progress are derived from database records.
-- Create projects, tasks, and daily progress notes; update task statuses; remove projects with a confirmation and cascade warning.
-- Search and filter projects and tasks; switch tasks between list and Kanban views; navigate monthly task deadlines.
+- Dashboard counts, task status distribution, time charts, and project progress are derived from database records.
+- Create, update, archive/reopen, and delete projects; change stages; create/update tasks with parent tasks and estimates; update task statuses; and create/edit/delete milestones.
+- Start, pause, resume, and stop one persistent timer; add, edit, delete, and export manual or timer-based time entries.
+- Use the project implementation workspace for preferred project roadmap order, task-based recommendations, persistent readiness checks, editable/reorderable execution phases, task-phase assignment, risks/blockers/decisions, effort summaries, and project-scoped activity history.
+- View weekly time, project time distribution, completed task trends, and CSV time-entry reports.
+- Search and filter projects and tasks; switch task list/Kanban views; navigate monthly task and milestone dates.
 - View recent activity and connection status. API validation errors use consistent JSON responses. Local CORS is configurable.
-- Light and dark themes, responsive navigation, visible focus indicators, and accessible labels.
+- Single dark forest/green theme, responsive navigation, visible focus indicators, and accessible labels.
 
 ## API routes
 
 - `GET/POST /api/projects`, `GET/PUT/DELETE /api/projects/{id}`
+- `GET /api/next-project/recommendation`; `GET /api/projects/{id}/planning`, `/activity`; `POST /api/projects/{id}/plan`; `GET/PUT /api/projects/{id}/readiness`
+- `POST /api/projects/{id}/phases`, `PUT/DELETE /api/project-phases/{id}`, `PUT /api/projects/{id}/phases/order`; tasks accept `projectPhaseId`
+- `POST /api/projects/{id}/planning-items`, `PUT/DELETE /api/planning-items/{id}`
 - `GET/POST /api/tasks`, `PUT/DELETE /api/tasks/{id}`, `PATCH /api/tasks/{id}/status`
 - `GET/POST /api/milestones`, `PUT/DELETE /api/milestones/{id}`
 - `GET/POST /api/daily-updates`
 - `GET /api/activity`
+- `GET /api/time/timer`, `POST /api/time/timer/{start|pause|resume|stop}`
+- `GET/POST /api/time/entries`, `PUT/DELETE /api/time/entries/{id}`
+- `GET /api/reports/weekly-hours`, `/time-by-project`, `/task-status`, `/completed-trend`, `/time-entries.csv`
 
-List endpoints accept `offset` and bounded `limit` parameters; project and task list endpoints also accept status/project filters. Milestones have CRUD APIs and database persistence; their dates appear in the calendar. A dedicated milestone editor, project/task editing forms, task deletion UI, useful links/repository editing, milestone-based progress, weekly calendar, authentication, and team permissions are future work. A backend unit test covers validation/error response formatting; API integration and frontend interaction tests still need to be added. The initial workspace is intended for a trusted local user; do not expose the unauthenticated API publicly.
+List endpoints accept `offset` and bounded `limit` parameters; project and task list endpoints also accept status/project filters. Progress counts only non-cancelled leaf tasks, so a parent with subtasks is not double-counted. Dashboard pending tasks include `To Do` and `In Review`; in-progress and blocked counts are separate. Time is stored in integer seconds and timer transitions use PostgreSQL timestamps. Weekly reports use the database session date/timezone (configure PostgreSQL to the intended workspace timezone for local-day boundaries).
+
+Planning checklist, execution phases, task-phase links, and planning items are persisted by Flyway migration V3. Readiness remains unchecked until the user confirms each item. The roadmap order is explicitly separated from the overdue/today/priority recommendation. Progress and logged effort come from stored leaf-task and time-entry data; missing targets and estimates are labeled as unset. PostgreSQL-backed migration and UI interaction verification remains necessary before production deployment.
+
+Still incomplete compared with the full product brief: authentication and owner scoping, user preferences/backup, configurable date-range filters across reports, subtasks hierarchy controls, and broad frontend interaction tests. The API is unauthenticated; do not expose it publicly or deploy as a production service until access controls are implemented and tested.
