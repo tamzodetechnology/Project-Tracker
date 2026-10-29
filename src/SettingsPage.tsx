@@ -40,7 +40,7 @@ export function SettingsPage({
   const [workspaceName, setWorkspaceName] = useState(workspaceData.workspaceName || 'Tamzode Technology');
   const [companyName, setCompanyName] = useState(workspaceData.companyName || 'Tamzode Tech Lab');
   const [userDisplayName, setUserDisplayName] = useState(workspaceData.userDisplayName || 'Sureha DJ');
-  const [apiUrl, setApiUrl] = useState(import.meta.env.VITE_API_URL || 'http://localhost:8080/api');
+  const [apiUrl, setApiUrl] = useState(import.meta.env.VITE_API_URL || 'https://project-tracker-7z3d.onrender.com/api');
   const [testing, setTesting] = useState(false);
   const [pingResult, setPingResult] = useState<string | null>(null);
 
@@ -193,7 +193,7 @@ export function SettingsPage({
 
           <div className="settings-input-group" style={{ maxWidth: 480 }}>
             <label>API Endpoint URL</label>
-            <input value={apiUrl} onChange={(e) => setApiUrl(e.target.value)} placeholder="http://localhost:8080/api" />
+            <input value={apiUrl} onChange={(e) => setApiUrl(e.target.value)} placeholder="https://project-tracker-7z3d.onrender.com/api" />
           </div>
         </section>
 

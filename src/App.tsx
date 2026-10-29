@@ -66,8 +66,8 @@ import './ActivityPage.css';
 import './SettingsPage.css';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080/api',
-  timeout: 4000,
+  baseURL: import.meta.env.VITE_API_URL || 'https://project-tracker-7z3d.onrender.com/api',
+  timeout: 8000,
 });
 
 const nav = [

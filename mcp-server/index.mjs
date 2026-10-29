@@ -16,7 +16,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, '..');
 const DATA_FILE = path.join(ROOT_DIR, 'data', 'workspace_store.json');
-const API_URL = process.env.TRACKER_API_URL || 'http://localhost:8080/api';
+const API_URL = process.env.TRACKER_API_URL || 'https://project-tracker-7z3d.onrender.com/api';
 
 // Safe logger to stderr (stdio stdout is reserved exclusively for JSON-RPC)
 function log(...args) {
@@ -119,7 +119,7 @@ function saveStore(store) {
 async function apiRequest(endpoint, method = 'GET', data = null) {
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 1200);
+    const timeout = setTimeout(() => controller.abort(), 6000);
     const options = {
       method,
       headers: { 'Content-Type': 'application/json' },

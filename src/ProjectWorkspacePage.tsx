@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Activity, AlertTriangle, ArrowRight, CalendarDays, Check, CheckCircle2, Circle, Clock3, Flag, ListChecks, Plus, Sparkles, Target, Timer, X } from 'lucide-react';
 import axios from 'axios';
 
-const api=axios.create({baseURL:import.meta.env.VITE_API_URL||'http://localhost:8080/api',timeout:8000});
+const api=axios.create({baseURL:import.meta.env.VITE_API_URL||'https://project-tracker-7z3d.onrender.com/api',timeout:8000});
 type Project={id:number;name:string;description?:string;status:string;priority:string;currentStage?:string;startDate?:string;deadline?:string;progress?:number;completedTasks?:number;taskCount?:number};
 type Task={id:number;title:string;description?:string;projectId:number;projectName?:string;projectPhaseId?:number;parentTaskId?:number;status:'To Do'|'In Progress'|'In Review'|'Done'|'Blocked'|'Cancelled';priority:'Low'|'Medium'|'High'|'Urgent'|'Critical';dueDate?:string;estimatedMinutes?:number};
 type Milestone={id:number;name:string;projectId:number;projectName?:string;targetDate?:string;status:string};
