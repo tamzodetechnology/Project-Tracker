@@ -1,0 +1,83 @@
+{
+  "projects": [
+    {
+      "id": 1,
+      "name": "Project Tracker SaaS",
+      "description": "Modern luxury deep-green project, task, and time telemetry suite.",
+      "category": "Web Application",
+      "technology": "React, Vite, TypeScript, Spring Boot",
+      "status": "Completed",
+      "priority": "Critical",
+      "startDate": "2026-10-29",
+      "deadline": "",
+      "currentStage": "Development",
+      "progress": 100,
+      "taskCount": 8,
+      "completedTasks": 1,
+      "milestoneCount": 2
+    }
+  ],
+  "tasks": [
+    {
+      "id": 1,
+      "title": "MCP Server Automation",
+      "description": "Implement native MCP server for Antigravity and Claude Code automation.",
+      "projectId": 1,
+      "projectName": "Project Tracker SaaS",
+      "status": "Done",
+      "priority": "High",
+      "dueDate": "2026-10-29",
+      "actualSeconds": 1800,
+      "notes": "Completed MCP server for Antigravity and Claude Code."
+    }
+  ],
+  "milestones": [],
+  "activities": [
+    {
+      "id": 1793273458704,
+      "action": "Updated task to Done",
+      "entityType": "Task",
+      "entityName": "MCP Server Automation",
+      "details": "In Progress ➔ Done (Completed MCP server for Antigravity and Claude Code.)",
+      "createdAt": "2026-10-29T11:30:58.704Z"
+    },
+    {
+      "id": 1793273458522,
+      "action": "Logged 45m work",
+      "entityType": "Time Entry",
+      "entityName": "Project Tracker SaaS",
+      "details": "Task: MCP Server Setup · Implemented zero-touch autonomous MCP server for Antigravity & Claude.",
+      "createdAt": "2026-10-29T11:30:58.293Z"
+    },
+    {
+      "id": 1793273457914,
+      "action": "MCP Server Connected",
+      "entityType": "System",
+      "entityName": "Antigravity / Claude Automation",
+      "details": "Project Tracker MCP Server initialized successfully.",
+      "createdAt": "2026-10-29T11:30:57.914Z"
+    }
+  ],
+  "timeEntries": [
+    {
+      "id": 1793273458522,
+      "projectId": 1,
+      "projectName": "Project Tracker SaaS",
+      "taskId": 2,
+      "taskTitle": "MCP Server Setup",
+      "startedAt": "2026-10-29T10:45:58.293Z",
+      "endedAt": "2026-10-29T11:30:58.293Z",
+      "durationSeconds": 2700,
+      "notes": "Implemented zero-touch autonomous MCP server for Antigravity & Claude."
+    }
+  ],
+  "timer": {
+    "status": "Stopped",
+    "elapsedSeconds": 0,
+    "projectId": null,
+    "projectName": null,
+    "taskId": null,
+    "taskTitle": null,
+    "startedAt": null
+  }
+}

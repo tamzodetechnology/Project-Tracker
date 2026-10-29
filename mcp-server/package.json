@@ -1,0 +1,24 @@
+{
+  "name": "project-tracker-mcp",
+  "version": "1.0.0",
+  "description": "Model Context Protocol (MCP) server for automated project and time tracking in Antigravity and Claude Code",
+  "type": "module",
+  "main": "index.mjs",
+  "bin": {
+    "project-tracker-mcp": "./index.mjs"
+  },
+  "scripts": {
+    "start": "node index.mjs",
+    "test": "node test-mcp.mjs"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "project-tracker",
+    "time-tracking",
+    "antigravity",
+    "claude"
+  ],
+  "author": "Tamzode Technology",
+  "license": "MIT"
+}
