@@ -2,55 +2,43 @@
   "projects": [
     {
       "id": 1,
-      "name": "Project Tracker SaaS",
-      "description": "Modern luxury deep-green project, task, and time telemetry suite.",
-      "category": "Web Application",
-      "technology": "React, Vite, TypeScript, Spring Boot",
-      "status": "Completed",
-      "priority": "Critical",
-      "startDate": "2026-10-29",
-      "deadline": "",
-      "currentStage": "Development",
-      "progress": 100,
-      "taskCount": 8,
-      "completedTasks": 1,
-      "milestoneCount": 2
-    },
-    {
-      "id": 2,
       "name": "Bezent Ecosystem (HRMS & PMS)",
       "description": "Enterprise multi-tenant HRMS & Project Management System (PMS) covering attendance, employee records, tenant administration, and workflow automations.",
       "category": "Enterprise SaaS",
       "technology": "TypeScript, React, Node.js, Drizzle ORM, MySQL 8.4",
       "status": "In Progress",
       "priority": "Critical",
-      "startDate": "2026-10-04",
-      "deadline": "2026-11-18",
+      "startDate": "2026-10-01",
+      "deadline": "2026-11-20",
       "currentStage": "Development",
       "progress": 60,
       "taskCount": 5,
-      "completedTasks": 3,
+      "completedTasks": 2,
       "milestoneCount": 2
+    },
+    {
+      "id": 2,
+      "name": "Project Tracker SaaS",
+      "description": "Executive telemetry suite for developer time tracking, tasks, and Antigravity MCP integration.",
+      "category": "Productivity Tool",
+      "technology": "React, Vite, TypeScript, Node.js MCP, Spring Boot",
+      "status": "In Progress",
+      "priority": "High",
+      "startDate": "2026-10-15",
+      "deadline": "2026-11-10",
+      "currentStage": "Development",
+      "progress": 90,
+      "taskCount": 3,
+      "completedTasks": 2,
+      "milestoneCount": 1
     }
   ],
   "tasks": [
     {
-      "id": 1,
-      "title": "MCP Server Automation",
-      "description": "Implement native MCP server for Antigravity and Claude Code automation.",
-      "projectId": 1,
-      "projectName": "Project Tracker SaaS",
-      "status": "Done",
-      "priority": "High",
-      "dueDate": "2026-10-29",
-      "actualSeconds": 1800,
-      "notes": "Completed MCP server for Antigravity and Claude Code."
-    },
-    {
-      "id": 201,
+      "id": 101,
       "title": "MySQL 8.4 DB setup and Drizzle ORM migrations",
       "description": "Configure local mysqld datadir at C:/ProgramData/MySQL/bezent_dev_data and run drizzle migrations.",
-      "projectId": 2,
+      "projectId": 1,
       "projectName": "Bezent Ecosystem (HRMS & PMS)",
       "status": "Done",
       "priority": "Critical",
@@ -58,10 +46,10 @@
       "actualSeconds": 14400
     },
     {
-      "id": 202,
+      "id": 102,
       "title": "Attendance module location & security verification",
       "description": "Implement geofenced attendance capture, shift rules, and tamper verification.",
-      "projectId": 2,
+      "projectId: 1,
       "projectName": "Bezent Ecosystem (HRMS & PMS)",
       "status": "In Progress",
       "priority": "High",
@@ -69,63 +57,122 @@
       "actualSeconds": 7200
     },
     {
-      "id": 203,
+      "id": 103,
       "title": "Tenant Profile & Multi-company onboarding wizard",
       "description": "Complete Company Details, Tenant Profile, and Administration dashboard atlas.",
-      "projectId": 2,
+      "projectId": 1,
       "projectName": "Bezent Ecosystem (HRMS & PMS)",
       "status": "In Progress",
       "priority": "High",
       "dueDate": "2026-11-04",
       "actualSeconds": 3600
+    },
+    {
+      "id": 104,
+      "title": "BEZENT PMS workflow architecture benchmark",
+      "description": "Structure Project Manager (PM) and Project Lead (PL) workflow specification maps.",
+      "projectId": 1,
+      "projectName": "Bezent Ecosystem (HRMS & PMS)",
+      "status": "Done",
+      "priority": "Medium",
+      "dueDate": "2026-10-25",
+      "actualSeconds": 10800
+    },
+    {
+      "id": 105,
+      "title": "Employee records reference and changes audit",
+      "description": "Build employee profile history tracking, document uploads, and HRMS verification.",
+      "projectId": 1,
+      "projectName": "Bezent Ecosystem (HRMS & PMS)",
+      "status": "To Do",
+      "priority": "Medium",
+      "dueDate": "2026-11-12",
+      "actualSeconds": 0
+    },
+    {
+      "id": 201,
+      "title": "Luxury UI Overhaul (Dashboard, Projects, Tasks, Calendar)",
+      "description": "Deep green · electric lime redesign with readable typography and clean cards.",
+      "projectId": 2,
+      "projectName": "Project Tracker SaaS",
+      "status": "Done",
+      "priority": "Critical",
+      "dueDate": "2026-10-29",
+      "actualSeconds": 18000
+    },
+    {
+      "id": 202,
+      "title": "Model Context Protocol (MCP) Server Setup",
+      "description": "Zero-touch autonomous MCP server for Antigravity & Claude Code.",
+      "projectId": 2,
+      "projectName": "Project Tracker SaaS",
+      "status": "Done",
+      "priority": "High",
+      "dueDate": "2026-10-29",
+      "actualSeconds": 7200
+    },
+    {
+      "id": 203,
+      "title": "Live Telemetry & Work Session Auto-Logger",
+      "description": "Background session sync across multiple active repositories.",
+      "projectId": 2,
+      "projectName": "Project Tracker SaaS",
+      "status": "In Progress",
+      "priority": "Medium",
+      "dueDate": "2026-11-05",
+      "actualSeconds": 3600
     }
   ],
-  "milestones": [],
+  "milestones": [
+    {
+      "id": 1,
+      "name": "Phase 1: HRMS Core Architecture & MySQL Database",
+      "description": "Multi-tenant database schema, Drizzle ORM baseline, and API tests established.",
+      "projectId": 1,
+      "projectName": "Bezent Ecosystem (HRMS & PMS)",
+      "targetDate": "2026-10-20",
+      "status": "Completed"
+    },
+    {
+      "id": 2,
+      "name": "Phase 2: Attendance Security & Multi-Company Wizard",
+      "description": "Deploy geofenced biometric/location attendance rules and company onboarding flow.",
+      "projectId": 1,
+      "projectName": "Bezent Ecosystem (HRMS & PMS)",
+      "targetDate": "2026-11-14",
+      "status": "In Progress"
+    },
+    {
+      "id": 3,
+      "name": "v1.0 Release: Full Deep Green Suite + MCP Server",
+      "description": "Executive dark theme and Antigravity/Claude MCP tool integration published.",
+      "projectId": 2,
+      "projectName": "Project Tracker SaaS",
+      "targetDate": "2026-10-29",
+      "status": "Completed"
+    }
+  ],
   "activities": [
     {
-      "id": 1793274282516,
-      "action": "Project Added",
-      "entityType": "Project",
-      "entityName": "Bezent Ecosystem (HRMS & PMS)",
-      "details": "Added Bezent Ecosystem into active workspace store.",
-      "createdAt": "2026-10-29T11:44:42.517Z"
-    },
-    {
-      "id": 1793273458704,
-      "action": "Updated task to Done",
-      "entityType": "Task",
-      "entityName": "MCP Server Automation",
-      "details": "In Progress ➔ Done (Completed MCP server for Antigravity and Claude Code.)",
-      "createdAt": "2026-10-29T11:30:58.704Z"
-    },
-    {
-      "id": 1793273458522,
-      "action": "Logged 45m work",
-      "entityType": "Time Entry",
-      "entityName": "Project Tracker SaaS",
-      "details": "Task: MCP Server Setup · Implemented zero-touch autonomous MCP server for Antigravity & Claude.",
-      "createdAt": "2026-10-29T11:30:58.293Z"
-    },
-    {
-      "id": 1793273457914,
-      "action": "MCP Server Connected",
-      "entityType": "System",
-      "entityName": "Antigravity / Claude Automation",
-      "details": "Project Tracker MCP Server initialized successfully.",
-      "createdAt": "2026-10-29T11:30:57.914Z"
+      "id": 1793275000000,
+      "action": "Clean Production Workspace",
+      "entityType": "Workspace",
+      "entityName": "Bezent Ecosystem & Project Tracker",
+      "details": "Ready for live development tracking with Antigravity and Claude.",
+      "createdAt": "2026-10-29T11:48:00.000Z"
     }
   ],
   "timeEntries": [
     {
-      "id": 1793273458522,
+      "id": 1793275001000,
       "projectId": 1,
-      "projectName": "Project Tracker SaaS",
-      "taskId": 2,
-      "taskTitle": "MCP Server Setup",
-      "startedAt": "2026-10-29T10:45:58.293Z",
-      "endedAt": "2026-10-29T11:30:58.293Z",
-      "durationSeconds": 2700,
-      "notes": "Implemented zero-touch autonomous MCP server for Antigravity & Claude."
+      "projectName": "Bezent Ecosystem (HRMS & PMS)",
+      "taskId": 101,
+      "taskTitle": "MySQL 8.4 DB setup and Drizzle ORM migrations",
+      "startedAt": "2026-10-29T07:48:00.000Z",
+      "endedAt": "2026-10-29T11:48:00.000Z",
+      "durationSeconds": 14400,
+      "notes": "Configured local MySQL 8.4 datadir and ran drizzle migrations."
     }
   ],
   "timer": {
@@ -135,6 +182,7 @@
     "projectName": null,
     "taskId": null,
     "taskTitle": null,
-    "startedAt": null
+    "startedAt": null,
+    "notes": ""
   }
 }

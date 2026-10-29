@@ -8,8 +8,9 @@ import {
   User,
   ShieldCheck,
   Check,
+  Trash2,
 } from 'lucide-react';
-import { downloadBackupJson, resetWorkspaceData } from './mockData';
+import { downloadBackupJson, resetWorkspaceData, purgeDummyData } from './mockData';
 import type { WorkspaceData } from './mockData';
 import './SettingsPage.css';
 
@@ -104,6 +105,14 @@ export function SettingsPage({
       resetWorkspaceData();
       onResetData();
       notify('Workspace reset to fresh demo data');
+    }
+  };
+
+  const handlePurgeDummy = () => {
+    if (window.confirm('Clear all sample dummy data and keep only real projects (Bezent Ecosystem & Project Tracker)?')) {
+      const clean = purgeDummyData();
+      onRestoreBackup(clean);
+      notify('Dummy data purged. Only real projects active!');
     }
   };
 
@@ -240,6 +249,19 @@ export function SettingsPage({
               <div>
                 <b>Restore from JSON</b>
                 <p>Upload a previously exported backup file to restore workspace state.</p>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              className="backup-card-btn"
+              style={{ borderColor: '#2b5e39' }}
+              onClick={handlePurgeDummy}
+            >
+              <Trash2 size={20} color="#72df00" />
+              <div>
+                <b style={{ color: '#8cff45' }}>Purge Dummy Data</b>
+                <p>Keep only real projects (Bezent Ecosystem & Project Tracker) and clear sample entries.</p>
               </div>
             </button>
 
