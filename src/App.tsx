@@ -9,6 +9,8 @@ import personalProjectCharacter from './assets/personal-project-character.png';
 import dashboardHero from './assets/dashboard-hero.png';
 import { ProjectWorkspacePage } from './ProjectWorkspacePage';
 import { TasksPage } from './TasksPage';
+import { ProjectsPage } from './ProjectsPage';
+import './ProjectsPage.css';
 import './TasksPage.css';
 
 type Status='Planned'|'In Progress'|'On Hold'|'Completed'|'Archived'; type Priority='Low'|'Medium'|'High'|'Urgent'|'Critical'; type TaskStatus='To Do'|'In Progress'|'In Review'|'Done'|'Blocked'|'Cancelled';
@@ -81,7 +83,7 @@ function App(){
         </div>
       </header>
  <div className="content"><AnimatePresence mode="wait"><motion.div key={page} initial={{opacity:0,y:6}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-4}} transition={{duration:.18}}>
- {loading?<div className="loading"><LoaderCircle className="spin" size={22}/>Connecting to your workspace...</div>:error?<Unavailable retry={reload}/>:page==='Dashboard'?<Dashboard projects={projects} activities={activities} metrics={metrics} dueSoon={dueSoon} high={high} weeklyHours={weeklyHours} timeByProject={timeByProject} taskStatus={taskStatus} onTask={()=>setModal('task')} onUpdate={()=>setModal('update')} onProject={()=>setModal('project')} onPage={setPage} onTaskStatus={status=>{setTaskStatusFilter(status);setPage('My Tasks')}} changeStatus={changeStatus}/>:page==='Project Workspace'?<ProjectWorkspacePage initialProjectId={selectedProjectId||undefined} projects={projects} tasks={tasks} milestones={milestones} onPage={setPage} onAddTask={(projectId,phaseId)=>{setEditingTask(null);setTaskProjectId(projectId);setTaskPhaseId(phaseId);setModal('task')}} onComplete={async t=>{await changeStatus(t,'Done')}} reload={reload} notify={setToast}/>:page==='Projects'?<Projects projects={projects.filter(p=>p.name.toLowerCase().includes(search.toLowerCase()))} onCreate={()=>setModal('project')} onOpen={p=>{setSelectedProjectId(p.id);setPage('Project Workspace')}} onEdit={p=>{setEditingProject(p);setModal('project')}} onStatus={(p,status)=>updateProject(p,{status})} onStage={(p,currentStage)=>updateProject(p,{currentStage})} onDelete={removeProject}/>:page==='My Tasks'?<TasksPage tasks={tasks} projects={projects} milestones={milestones} initialStatus={taskStatusFilter} onCreate={()=>setModal('task')} onEdit={t=>{setEditingTask(t);setModal('task')}} onDelete={removeTask} changeStatus={changeStatus} timer={timer} reload={reload} notify={setToast}/>:page==='Calendar'?<Calendar tasks={tasks} milestones={milestones} projects={projects} date={calendar} setDate={setCalendar}/>:page==='Time Tracking'?<TimeTrackingPage projects={projects} tasks={tasks} entries={timeEntries} timer={timer} setTimer={setTimer} reload={reload} notify={setToast}/>:page==='Milestones'?<MilestonesPage projects={projects} milestones={milestones} reload={reload} notify={setToast}/>:page==='Reports'?<ReportsPage weeklyHours={weeklyHours} timeByProject={timeByProject} taskStatus={taskStatus} completedTrend={completedTrend} metrics={metrics}/>:page==='Activity History'?<ActivityPage items={activities}/>:<SettingsPage api={!!error} projects={projects.length} tasks={tasks.length}/>}
+ {loading?<div className="loading"><LoaderCircle className="spin" size={22}/>Connecting to your workspace...</div>:error?<Unavailable retry={reload}/>:page==='Dashboard'?<Dashboard projects={projects} activities={activities} metrics={metrics} dueSoon={dueSoon} high={high} weeklyHours={weeklyHours} timeByProject={timeByProject} taskStatus={taskStatus} onTask={()=>setModal('task')} onUpdate={()=>setModal('update')} onProject={()=>setModal('project')} onPage={setPage} onTaskStatus={status=>{setTaskStatusFilter(status);setPage('My Tasks')}} changeStatus={changeStatus}/>:page==='Project Workspace'?<ProjectWorkspacePage initialProjectId={selectedProjectId||undefined} projects={projects} tasks={tasks} milestones={milestones} onPage={setPage} onAddTask={(projectId,phaseId)=>{setEditingTask(null);setTaskProjectId(projectId);setTaskPhaseId(phaseId);setModal('task')}} onComplete={async t=>{await changeStatus(t,'Done')}} reload={reload} notify={setToast}/>:page==='Projects'?<ProjectsPage projects={projects} tasks={tasks} milestones={milestones} onCreate={()=>setModal('project')} onOpen={p=>{setSelectedProjectId(p.id);setPage('Project Workspace')}} onEdit={p=>{setEditingProject(p);setModal('project')}} onStatus={(p,status)=>updateProject(p,{status})} onStage={(p,currentStage)=>updateProject(p,{currentStage})} onDelete={removeProject}/>:page==='My Tasks'?<TasksPage tasks={tasks} projects={projects} milestones={milestones} initialStatus={taskStatusFilter} onCreate={()=>setModal('task')} onEdit={t=>{setEditingTask(t);setModal('task')}} onDelete={removeTask} changeStatus={changeStatus} timer={timer} reload={reload} notify={setToast}/>:page==='Calendar'?<Calendar tasks={tasks} milestones={milestones} projects={projects} date={calendar} setDate={setCalendar}/>:page==='Time Tracking'?<TimeTrackingPage projects={projects} tasks={tasks} entries={timeEntries} timer={timer} setTimer={setTimer} reload={reload} notify={setToast}/>:page==='Milestones'?<MilestonesPage projects={projects} milestones={milestones} reload={reload} notify={setToast}/>:page==='Reports'?<ReportsPage weeklyHours={weeklyHours} timeByProject={timeByProject} taskStatus={taskStatus} completedTrend={completedTrend} metrics={metrics}/>:page==='Activity History'?<ActivityPage items={activities}/>:<SettingsPage api={!!error} projects={projects.length} tasks={tasks.length}/>}
  </motion.div></AnimatePresence></div></main>
   {menu&&<button className="scrim" onClick={()=>setMenu(false)} aria-label="Close navigation"/>}{modal&&<Modal kind={modal} projects={projects} tasks={tasks} milestones={milestones} initialProject={editingProject} initialTask={editingTask} initialProjectId={taskProjectId} initialPhaseId={taskPhaseId} close={()=>{setModal(null);setEditingProject(null);setEditingTask(null);setTaskProjectId(undefined);setTaskPhaseId(undefined)}} save={mutate}/>}<AnimatePresence>{toast&&<motion.div className="toast" initial={{opacity:0,y:14}} animate={{opacity:1,y:0}} exit={{opacity:0,y:8}}><CheckCircle2 size={18}/>{toast}</motion.div>}</AnimatePresence>
   </div>
@@ -116,55 +118,6 @@ function FeaturedProject({p,onBrowse}:{p:Project;onBrowse:()=>void}){const progr
 function ProjectCard({p,color,onDelete,onEdit,onStatus,onStage,onOpen,menuOpen=false,onMenuToggle=()=>{},onMenuClose=()=>{}}:{p:Project;color:string;onDelete?:()=>void;onEdit?:(p:Project)=>void;onStatus?:(p:Project,status:Status)=>void;onStage?:(p:Project,stage:NonNullable<Project['currentStage']>)=>void;onOpen?:()=>void;menuOpen?:boolean;onMenuToggle?:()=>void;onMenuClose?:()=>void}){
   const stages=['Planning','Design','Development','Testing','Deployment','Completed'];
   return <article className={`project-card ${menuOpen?'menu-is-open':''}`}><div className="project-card-top"><div className="project-symbol" style={{'--project-color':color} as React.CSSProperties}><FolderKanban size={18}/></div><span className={`status-badge ${p.status.toLowerCase().replace(' ','-')}`}><i/>{p.status}</span>{(onDelete||onEdit||onStatus)&&<div className="project-menu-wrap"><button className="icon-button tiny" aria-label={`Options for ${p.name}`} aria-expanded={menuOpen} onClick={onMenuToggle}><MoreHorizontal size={17}/></button>{menuOpen&&<div className="project-dropdown-menu">{onEdit&&<button className="dropdown-item" onClick={()=>{onMenuClose();onEdit(p)}}>Edit project</button>}{onStatus&&<button className="dropdown-item" onClick={()=>{onMenuClose();onStatus(p,p.status==='Archived'?'Planned':'Archived')}}>{p.status==='Archived'?'Reopen project':'Archive project'}</button>}{onDelete&&<button className="dropdown-item danger" onClick={()=>{onMenuClose();onDelete()}}>Delete project</button>}</div>}</div>}</div><h3><button className="project-title-open" onClick={onOpen}>{p.name}</button></h3><p className="project-desc">{p.description||p.category}</p><div className="project-stage-row"><label>Stage<select aria-label={`Stage for ${p.name}`} value={p.currentStage||'Planning'} disabled={!onStage} onChange={e=>onStage?.(p,e.target.value as NonNullable<Project["currentStage"]>)}>{stages.map(stage=><option key={stage}>{stage}</option>)}</select></label></div><div className="progress-label"><span>Progress</span><b>{p.progress}%</b></div><div className="progress-track"><div style={{width:`${p.progress}%`,background:color}}/></div><div className="project-card-foot"><span><ListTodo size={14}/>{p.completedTasks||0}/{p.taskCount||0} tasks</span><span className="priority-label"><i className={`priority-dot ${p.priority.toLowerCase()}`}/>{p.priority} priority</span></div></article>;
-}
-function Projects({projects,onCreate,onDelete,onEdit,onStatus,onStage,onOpen}:{projects:Project[];onCreate:()=>void;onDelete:(p:Project)=>void;onEdit:(p:Project)=>void;onStatus:(p:Project,status:Status)=>void;onStage:(p:Project,stage:NonNullable<Project['currentStage']>)=>void;onOpen:(p:Project)=>void}){
-  const [q,setQ]=useState(''),[status,setStatus]=useState('All statuses'),[view,setView]=useState('grid'),[openMenuProjectId,setOpenMenuProjectId]=useState<number|null>(null);
-  useEffect(()=>{if(openMenuProjectId===null)return;const closeOutside=(event:PointerEvent)=>{const target=event.target;if(target instanceof Element&&!target.closest('.project-menu-wrap'))setOpenMenuProjectId(null)};const closeEscape=(event:KeyboardEvent)=>{if(event.key==='Escape')setOpenMenuProjectId(null)};document.addEventListener('pointerdown',closeOutside);document.addEventListener('keydown',closeEscape);return()=>{document.removeEventListener('pointerdown',closeOutside);document.removeEventListener('keydown',closeEscape)}},[openMenuProjectId]);
-  const filtered=projects.filter(p=>p.name.toLowerCase().includes(q.toLowerCase())&&(status==='All statuses'||p.status===status));
-  return (
-    <>
-      <Header
-        eyebrow="YOUR WORKSPACE"
-        title="Projects"
-        description={`${projects.length} ${projects.length===1?'project':'projects'} keeping things moving.`}
-        actions={<button className="button primary" onClick={onCreate}><Plus size={16}/> New project</button>}
-      />
-      <div className="toolbar">
-        <label className="search inline-search">
-          <Search size={16}/>
-          <input placeholder="Find a project..." value={q} onChange={e=>setQ(e.target.value)}/>
-        </label>
-        <div className="toolbar-right">
-          <select value={status} onChange={e=>setStatus(e.target.value)}>
-            <option>All statuses</option>
-            <option>Planned</option>
-            <option>In Progress</option>
-            <option>On Hold</option>
-            <option>Completed</option>
-            <option>Archived</option>
-          </select>
-          <div className="view-toggle">
-            <button onClick={()=>setView('grid')} className={view==='grid'?'active':''}>Grid</button>
-            <button onClick={()=>setView('list')} className={view==='list'?'active':''}>List</button>
-          </div>
-        </div>
-      </div>
-      {filtered.length ? (
-        <div className={view==='grid'?'project-grid projects-page-grid':'project-list'}>
-          {filtered.map((p,i)=>(
-            <ProjectCard key={p.id} p={p} color={colors[i%4]} onDelete={()=>onDelete(p)} onEdit={onEdit} onStatus={onStatus} onStage={onStage} onOpen={()=>onOpen(p)} menuOpen={openMenuProjectId===p.id} onMenuToggle={()=>setOpenMenuProjectId(current=>current===p.id?null:p.id)} onMenuClose={()=>setOpenMenuProjectId(null)}/>
-          ))}
-        </div>
-      ) : (
-        <Empty
-          title="No projects found"
-          body={projects.length?'Try a different search or status filter.':'Create a project to see it here.'}
-          action="Create project"
-          onClick={onCreate}
-        />
-      )}
-    </>
-  );
 }
 function Calendar({tasks,milestones,projects,date,setDate}:{tasks:Task[];milestones:Milestone[];projects:Project[];date:Date;setDate:(d:Date)=>void}){const year=date.getFullYear(),month=date.getMonth(),start=new Date(year,month,1),days=new Date(year,month+1,0).getDate(),offset=(start.getDay()+6)%7,cells=Math.ceil((offset+days)/7)*7;return <><Header eyebrow="PLAN AHEAD" title="Calendar" description="Deadlines and milestones, all in one place." actions={<button className="button secondary" onClick={()=>setDate(new Date())}>Today</button>}/><div className="calendar-panel"><div className="calendar-toolbar"><div className="calendar-month"><button className="icon-button" onClick={()=>setDate(new Date(year,month-1,1))}><ChevronLeft size={18}/></button><h2>{date.toLocaleString('en',{month:'long',year:'numeric'})}</h2><button className="icon-button" onClick={()=>setDate(new Date(year,month+1,1))}><ChevronRight size={18}/></button></div><span className="calendar-legend"><i/>Task deadline <span className="milestone-legend"/>Milestone</span></div><div className="calendar-grid">{['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d=><div className="weekday" key={d}>{d}</div>)}{Array.from({length:cells},(_,i)=>{const day=i-offset+1,valid=day>0&&day<=days,dt=valid?`${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`:'',items=tasks.filter(t=>t.dueDate===dt),targets=milestones.filter(m=>m.targetDate===dt);return <div key={i} className={`calendar-cell ${valid?'':'muted'} ${valid&&new Date(year,month,day).toDateString()===new Date().toDateString()?'today':''}`}><span className="calendar-day">{valid?day:new Date(year,month,day).getDate()}</span>{items.slice(0,2).map(t=><span key={`t${t.id}`} className={`calendar-event ${t.status==='Done'?'done':''}`} title={t.title}>{t.title}</span>)}{targets.slice(0,2).map(m=><span key={`m${m.id}`} className="calendar-event milestone-event" title={m.name}>{m.name}</span>)}{items.length+targets.length>2&&<small>+{items.length+targets.length-2} more</small>}</div>})}</div></div><section className="section calendar-upcoming"><div className="section-head"><div><h2>Month at a glance</h2><p>{tasks.filter(t=>t.dueDate?.startsWith(`${year}-${String(month+1).padStart(2,'0')}`)).length} task deadlines · {milestones.filter(m=>m.targetDate?.startsWith(`${year}-${String(month+1).padStart(2,'0')}`)).length} milestones · {projects.length} projects</p></div></div></section></>}
 function localDateTimeInput(d:Date){const pad=(n:number)=>String(n).padStart(2,'0');return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`}
